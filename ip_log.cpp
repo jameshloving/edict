@@ -3,22 +3,23 @@
   James Loving
 **/
 
-#include <iostream>
-#include <string>
 #include <exception>
+#include <iostream>
+#include <queue>
+#include <string>
 #include <stdint.h>
 
 #include "libs/bloom/bloom_filter.hpp"
 
-// parent class for IPv4 and IPv6 timeslot logs
-class ip_log
+// parent class for IPv4 and IPv6 sublogs
+class ip_sublog_parent
 {
 protected:
   bloom_parameters parameters;
   bloom_filter filter;
 
 public:
-  ip_log(int count, float probability)
+  ip_sublog_parent(int count, float probability)
   {
     if (count > 0)
     {
@@ -26,7 +27,8 @@ public:
     }
     else
     {
-      throw std::invalid_argument("Invalid ip_log.projected_element_count: " + std::to_string(count));
+      throw std::invalid_argument("Invalid ip_log.projected_element_count: "
+                                  + std::to_string(count));
     }
 
     if (probability > -1.0 && probability < 1.0)
@@ -35,7 +37,8 @@ public:
     }
     else
     {
-      throw std::invalid_argument("Invalid ip_log.false_positive_probability: " + std::to_string(probability));
+      throw std::invalid_argument("Invalid ip_log.false_positive_probability: "
+                                  + std::to_string(probability));
     }
 
     parameters.compute_optimal_parameters();
@@ -48,30 +51,29 @@ public:
 // structure for IPv4 source
 struct ipv4_source
 {
-  uint32_t mac;
+  std::string mac;
   uint16_t port;
 };
 
-// child class for IPv4 timeslot log
-class ipv4_log
-: protected ip_log
+// structure for IPv6 source
+struct ipv6_source
 {
-private:
-  // TODO: MAC_string_to_uint32()
-  uint32_t MAC_string_to_uint32(std::string string)
-  {
-    uint32_t x = 0;
-    return x;
-  }
+  std::string mac;
+  // TODO: IPv6 source address
+};
 
+// child class for IPv4 sublog
+class ipv4_sublog
+: protected ip_sublog_parent
+{
 public:
-  ipv4_log(int count, float probability)
-  : ip_log(count, probability) {}
+  ipv4_sublog(int count, float probability)
+  : ip_sublog_parent(count, probability) {}
 
   void add_connection(std::string mac_address, uint16_t port)
   {
     ipv4_source source;
-    source.mac = MAC_string_to_uint32(mac_address);
+    source.mac = mac_address;
     
     if (port >= 0 && port < 65536)
     {
@@ -79,7 +81,8 @@ public:
     }
     else
     {
-      throw std::invalid_argument("Invalid ipv4_log.add_connection(port): " + std::to_string(port));
+      throw std::invalid_argument("Invalid ipv4_sublog.add_connection(port): "
+                                  + std::to_string(port));
     }
 
     filter.insert(source);
@@ -88,7 +91,7 @@ public:
   bool has_connection(std::string mac_address, uint16_t port)
   {
     ipv4_source source;
-    source.mac = MAC_string_to_uint32(mac_address);
+    source.mac = mac_address;
 
     if (port >= 0 && port < 65536)
     {
@@ -96,28 +99,35 @@ public:
     }
     else
     {
-      throw std::invalid_argument("Invalid ipv4_log.has_connection(port): " + std::to_string(port));
+      throw std::invalid_argument("Invalid ipv4_sublog.has_connection(port): "
+                                  + std::to_string(port));
     }
     
     return filter.contains(source);
   }
 };
 
-// TODO: child class for IPv6 timeslot log
+// TODO: child class for IPv6 sublog
 
-// structure for IPv6 source
-struct ipv6_source
+class ip_log
 {
-  // TODO: IPv6 source address
-  uint16_t port;
-};
+private:
+  std::queue<ipv4_sublog> ipv4_log;
+  // TODO: IPv6 queue
 
-// TODO: log-of-logs for IPv4 and IPv6
+public:
+  // TODO: add new sublog to log (done at end of timeslot)
+  // TODO: delete oldest sublog (done at end of timeslot) IFF out of space
+  // TODO: add connection to current sublog
+  // TODO: determine relevant sublog by timestamp of connection
+  // TODO: query relevant sublog for connection
+  // TODO: IPv6 stuff
+};
 
 // TODO: remove, this is for testing only
 int main()
 {
-  ipv4_log log(10000, 0.001);
+  ipv4_sublog log(10000, 0.001);
   log.add_connection("aa-bb-cc-dd-ee-ff", 10);
   std::cout << log.has_connection("aa-bb-cc-dd-ee-ff",10) << "\n";
   std::cout << sizeof(log) << " bytes\n";
