@@ -67,12 +67,21 @@ private:
 public:
   ipv4_log(int count, float probability)
   : ip_log(count, probability) {}
-  
+
   void add_connection(std::string mac_address, uint16_t port)
   {
     ipv4_source source;
     source.mac = MAC_string_to_uint32(mac_address);
-    source.port = port;
+    
+    if (port >= 0 && port < 65536)
+    {
+      source.port = port;
+    }
+    else
+    {
+      throw std::invalid_argument("Invalid ipv4_log.add_connection(port): " + std::to_string(port));
+    }
+
     filter.insert(source);
   }
 
@@ -80,7 +89,16 @@ public:
   {
     ipv4_source source;
     source.mac = MAC_string_to_uint32(mac_address);
-    source.port = port;
+
+    if (port >= 0 && port < 65536)
+    {
+      source.port = port;
+    }
+    else
+    {
+      throw std::invalid_argument("Invalid ipv4_log.has_connection(port): " + std::to_string(port));
+    }
+    
     return filter.contains(source);
   }
 };
