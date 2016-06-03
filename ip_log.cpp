@@ -10,7 +10,7 @@
 
 #include "libs/bloom/bloom_filter.hpp"
 
-// superclass for IPv4 and IPv6 timeslot logs
+// parent class for IPv4 and IPv6 timeslot logs
 class ip_log
 {
 protected:
@@ -43,25 +43,56 @@ public:
     bloom_filter filter_temp(parameters);
     filter = filter_temp;
   }
-
 };
 
-// subclass for IPv4 timeslot log
+// structure for IPv4 source
+struct ipv4_source
+{
+  uint32_t mac;
+  uint16_t port;
+};
+
+// child class for IPv4 timeslot log
 class ipv4_log
 : protected ip_log
 {
+private:
+  // TODO: MAC_string_to_uint32()
+  uint32_t MAC_string_to_uint32(std::string string)
+  {
+    uint32_t x = 0;
+    return x;
+  }
+
 public:
   ipv4_log(int count, float probability)
   : ip_log(count, probability) {}
   
-  // TODO: IPv4 data type
-  void add_connection(uint32_t address, uint16_t port)
+  void add_connection(std::string mac_address, uint16_t port)
   {
-    filter.insert(address);
+    ipv4_source source;
+    source.mac = MAC_string_to_uint32(mac_address);
+    source.port = port;
+    filter.insert(source);
+  }
+
+  bool has_connection(std::string mac_address, uint16_t port)
+  {
+    ipv4_source source;
+    source.mac = MAC_string_to_uint32(mac_address);
+    source.port = port;
+    return filter.contains(source);
   }
 };
 
-// TODO: subclass for IPv6 timeslot log
+// TODO: child class for IPv6 timeslot log
+
+// structure for IPv6 source
+struct ipv6_source
+{
+  // TODO: IPv6 source address
+  uint16_t port;
+};
 
 // TODO: log-of-logs for IPv4 and IPv6
 
@@ -69,8 +100,8 @@ public:
 int main()
 {
   ipv4_log log(10000, 0.001);
-
-  log.add_connection(3, 10);
-
+  log.add_connection("aa-bb-cc-dd-ee-ff", 10);
+  std::cout << log.has_connection("aa-bb-cc-dd-ee-ff",10) << "\n";
+  std::cout << sizeof(log) << " bytes\n";
   return 0;
 }
