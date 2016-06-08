@@ -3,14 +3,16 @@
   James Loving
 **/
 
-#include <chrono>
-#include <exception>
-#include <iostream>
-#include <queue>
-#include <string>
-#include <stdint.h>
+#include <arpa/inet.h>    // convert IPv6 strings <-> sockaddr_in6
+#include <chrono>         // clocks
+#include <exception>      // exception handling
+#include <iostream>       // output
+#include <netinet/in.h>   // sockaddr_in6 IPv6 struct
+#include <queue>          // basis for log-of-sublogs
+#include <string>         // string class
+#include <stdint.h>       // int vars of atypical size (16b, 32b)
 
-#include "libs/bloom/bloom_filter.hpp"
+#include "libs/bloom/bloom_filter.hpp" // Bloom filter, by Arash Partow
 
 const int SUBLOG_LENGTH = 3600; // sublog length in seconds
 const int DEFAULT_COUNT = 1000000; // default max capacity for Bloom filter
@@ -23,6 +25,12 @@ protected:
   bloom_parameters parameters;
   bloom_filter filter;
   std::chrono::steady_clock::time_point creation_time;
+
+  // TODO: fix this function
+  bool valid_mac(std::string)
+  {
+    return true;
+  }
 
 public:
   ip_sublog_parent(int count, float probability)
@@ -56,18 +64,18 @@ public:
   }
 };
 
-// structure for IPv4 source
+// struct for IPv4 source
 struct ipv4_source
 {
   std::string mac;
   uint16_t port;
 };
 
-// structure for IPv6 source
+// struct for IPv6 source
 struct ipv6_source
 {
   std::string mac;
-  // TODO: IPv6 source address
+  sockaddr_in6 address;
 };
 
 // child class for IPv4 sublog
@@ -90,9 +98,17 @@ public:
   void add_connection(std::string mac_address, uint16_t port)
   {
     ipv4_source source;
-    source.mac = mac_address;
-    // TODO: MAC address validation
     
+    if (valid_mac(mac_address))
+    {
+      source.mac = mac_address;
+    }
+    else
+    {
+      throw std::invalid_argument("Invalid ipv4_sublog.add_connection(mac_address): "
+                                  + mac_address);
+    }
+
     if (valid_port(port))
     {
       source.port = port;
@@ -161,14 +177,8 @@ public:
       ipv4_log.push(sublog);
       ipv4_log.back().add_connection(mac_address, port);
     }
-     // try to add to queue.first sublog
-      // catch exception
-      // push new sublog, 
-      // and add to new queue.first sbblog
   }
-  // TODO: add new sublog to log (done at end of timeslot)
   // TODO: delete oldest sublog (done at end of timeslot) IFF out of space
-  // TODO: add connection to current sublog
   // TODO: determine relevant sublog by timestamp of connection
   // TODO: query relevant sublog for connection
   // TODO: IPv6 stuff
