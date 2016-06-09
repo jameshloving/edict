@@ -62,6 +62,11 @@ public:
     
     creation_time = std::chrono::steady_clock::now();
   }
+
+  std::chrono::steady_clock::time_point get_creation_time()
+  {
+    return creation_time;
+  }
 };
 
 // struct for IPv4 source
@@ -151,12 +156,31 @@ public:
 };
 
 // TODO: child class for IPv6 sublog
+class ipv6_sublog
+: protected ip_sublog_parent
+{
+public:
+  ipv6_sublog()
+  : ip_sublog_parent(DEFAULT_COUNT, DEFAULT_PROBABILITY) {}
 
+  ipv6_sublog(int count, float probability)
+  : ip_sublog_parent(count, probability) {}
+
+  void add_connection(std::string mac_address, sockaddr_in6 ipv6_address)
+  {
+  }
+
+  bool has_connection(std::string mac_address, sockaddr_in6 ipv6_address)
+  {
+    return false;
+  }
+};
+ 
 class ip_log
 {
 private:
-  std::queue<ipv4_sublog> ipv4_log;
-  // TODO: IPv6 queue
+  std::deque<ipv4_sublog> ipv4_log;
+  std::deque<ipv6_sublog> ipv6_log;
 
 public:
   void add_ipv4_connection(std::string mac_address, uint16_t port)
@@ -164,7 +188,7 @@ public:
     if (ipv4_log.size() == 0)
     { 
       ipv4_sublog sublog;
-      ipv4_log.push(sublog);
+      ipv4_log.push_back(sublog);
     }
 
     try
@@ -174,9 +198,18 @@ public:
     catch (const std::out_of_range& e)
     {
       ipv4_sublog sublog;
-      ipv4_log.push(sublog);
+      ipv4_log.push_back(sublog);
       ipv4_log.back().add_connection(mac_address, port);
     }
+  }
+
+  bool has_ipv4_connection(std::string mac_address, uint16_t port)
+  {
+    for(auto it = ipv4_log.begin(); it != ipv4_log.end(); ++it)
+    {
+      std::cout << (it.get_creation_time() > 1);
+    }
+    return true;
   }
   // TODO: delete oldest sublog (done at end of timeslot) IFF out of space
   // TODO: determine relevant sublog by timestamp of connection
