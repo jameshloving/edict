@@ -1,0 +1,16 @@
+
+Make sure the conntrack kernel module is installed (if it isn't built into the kernel):
+
+   modprobe ip_conntrack
+
+If you have the conntrack tools installed you should be able to watch conntrack events with
+
+   conntrack -E
+
+The code in this directory is based entirely off an example program from:
+
+https://github.com/threatstack/libnetfilter_conntrack
+
+Note this does require linking with a GPL licensed library so this code has to be GPL licensed as well.
+
+
