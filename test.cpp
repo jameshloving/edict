@@ -31,8 +31,8 @@ int main()
   time_t add_time_2 = time(nullptr);
   std::cout << "  add_ipv4_connection(\"bb-cc-dd-ee-ff-aa\", 10): " << add_time_2 << "\n";
   log.add_ipv4_connection("bb-cc-dd-ee-ff-aa", 10);
-  std::cout << "  has_ipv4_connection(\"aa-bb-cc-dd-ee-ff\", 10): " << log.has_ipv4_connection("aa-bb-cc-dd-ee-ff", 10, add_time_1) << "\n";
-  std::cout << "  has_ipv4_connection(\"bb-cc-dd-ee-ff-aa\", 10): " << log.has_ipv4_connection("bb-cc-dd-ee-ff-aa", 10, add_time_2) << "\n";
+  std::cout << "  it->has_ipv4_connection(\"aa-bb-cc-dd-ee-ff\", 10): " << log.has_ipv4_connection("aa-bb-cc-dd-ee-ff", 10, add_time_1) << "\n";
+  std::cout << "  it->has_ipv4_connection(\"bb-cc-dd-ee-ff-aa\", 10): " << log.has_ipv4_connection("bb-cc-dd-ee-ff-aa", 10, add_time_2) << "\n";
   std::cout << "  sizeof(): " << sizeof(log) << " bytes\n";
 
   return 0;
