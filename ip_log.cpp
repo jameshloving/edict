@@ -64,7 +64,7 @@ public:
     creation_time = time(nullptr);
   }
 
-  time_t get_creation_time()
+  time_t get_creation_time() const
   {
     return creation_time;
   }
@@ -89,9 +89,9 @@ class ipv4_sublog
 : public ip_sublog_parent
 {
 private:
-  bool valid_port(uint16_t port)
+  bool valid_port(uint16_t port) const
   {
-    return (port >= 0 && port < 65536);
+    return true; 
   }
   
 public:
@@ -138,7 +138,7 @@ public:
   }
 
   bool has_connection(std::string mac_address,
-                      uint16_t port)
+                      uint16_t port) const
   {
     ipv4_source source;
     source.mac = mac_address;
