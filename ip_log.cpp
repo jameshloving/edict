@@ -27,7 +27,7 @@ protected:
   time_t creation_time;
 
   // TODO: fix this function
-  bool valid_mac(std::string)
+  bool valid_mac(std::string) const
   {
     return true;
   }
@@ -69,20 +69,6 @@ public:
   }
 };
 
-// struct for IPv4 source
-struct ipv4_source
-{
-  std::string mac;
-  uint16_t port;
-};
-
-// struct for IPv6 source
-struct ipv6_source
-{
-  std::string mac;
-  sockaddr_in6 ipv6;
-};
-
 // child class for IPv4 sublog
 class ipv4_sublog
 : public ip_sublog_parent
@@ -103,23 +89,13 @@ public:
   void add_connection(std::string mac_address,
                       uint16_t port)
   {
-    ipv4_source source;
-    
-    if (valid_mac(mac_address))
-    {
-      source.mac = mac_address;
-    }
-    else
+    if (!valid_mac(mac_address))
     {
       throw std::invalid_argument("Invalid ipv4_sublog.add_connection(mac_address): "
                                   + mac_address);
     }
 
-    if (valid_port(port))
-    {
-      source.port = port;
-    }
-    else
+    if (!valid_port(port))
     {
       throw std::invalid_argument("Invalid ipv4_sublog.add_connection(port): "
                                   + std::to_string(port));
@@ -128,7 +104,7 @@ public:
     if ((time(nullptr) - creation_time) < SUBLOG_LENGTH)
     {
       std::cout << "    Inserted @ " << time(nullptr) << "\n";
-      filter->insert(source);
+      filter->insert(mac_address + std::to_string(port));
     }
     else
     {
@@ -139,21 +115,19 @@ public:
   bool has_connection(std::string mac_address,
                       uint16_t port) const
   {
-    ipv4_source source;
-    source.mac = mac_address;
-    // TODO: MAC address validation
-
-    if (valid_port(port))
+    if (!valid_mac(mac_address))
     {
-      source.port = port;
+      throw std::invalid_argument("Invalid ipv4_sublog.add_connection(mac_address): "
+                                  + mac_address);
     }
-    else
+
+    if (!valid_port(port))
     {
       throw std::invalid_argument("Invalid ipv4_sublog.has_connection(port): "
                                   + std::to_string(port));
     }
     
-    return filter->contains(source);
+    return filter->contains(mac_address + std::to_string(port));
   }
 };
 
@@ -163,7 +137,7 @@ class ipv6_sublog
 {
 private:
   // TODO: validate IPv6 address
-  bool valid_ipv6(sockaddr_in6 ipv6_address)
+  bool valid_ipv6(std::string ipv6_address) const
   {
     return true;
   }
@@ -176,25 +150,15 @@ public:
   : ip_sublog_parent(count, probability) {}
 
   void add_connection(std::string mac_address,
-                      sockaddr_in6 ipv6_address)
+                      std::string ipv6_address)
   {
-    ipv6_source source;
-    
-    if (valid_mac(mac_address))
-    {
-      source.mac = mac_address;
-    }
-    else
+    if (!valid_mac(mac_address))
     {
       throw std::invalid_argument("Invalid ipv6_sublog.add_connection(mac_address): "
                                   + mac_address);
     }
 
-    if (valid_ipv6(ipv6_address))
-    {
-      source.ipv6 = ipv6_address;
-    }
-    else
+    if (!valid_ipv6(ipv6_address))
     {
       // TODO: include printed ipv6_address
       throw std::invalid_argument("Invalid ipv6_sublog.add_connection(ipv6_address)");
@@ -202,7 +166,7 @@ public:
 
     if ((time(nullptr) - creation_time) < SUBLOG_LENGTH)
     {
-      filter->insert(source);
+      filter->insert(mac_address + ipv6_address);
     }
     else
     {
@@ -211,7 +175,7 @@ public:
   }
 
   bool has_connection(std::string mac_address,
-                      sockaddr_in6 ipv6_address)
+                      std::string ipv6_address)
   {
     return false;
   }
