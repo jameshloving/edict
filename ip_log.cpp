@@ -61,7 +61,7 @@ public:
   {
     if (!valid_mac(mac_address))
     {
-      throw std::invalid_argument("Invalid ipv4_sublog.add_connection(mac_address): "
+      throw std::invalid_argument("Invalid ip_sublog.add_ipv4(mac_address): "
                                   + mac_address);
     }
 
@@ -72,7 +72,7 @@ public:
     }
     else
     {
-      throw std::out_of_range("Beyond ipv4 sublog length");
+      throw std::out_of_range("Attempt to insert ipv6 beyond ip_sublog timespan");
     }
   }
 
@@ -81,15 +81,49 @@ public:
   {
     if (!valid_mac(mac_address))
     {
-      throw std::invalid_argument("Invalid ipv4_sublog.add_connection(mac_address): "
+      throw std::invalid_argument("Invalid ip_sublog.has_ipv4(mac_address): "
                                   + mac_address);
     }
 
     return filter->contains(mac_address + std::to_string(port));
   }
 
-  // TODO: add_ipv6
-  // TODO: has_ipv6
+  void add_ipv6(std::string mac_address,
+                std::string ipv6_address)
+  {
+    if (!valid_mac(mac_address))
+    {
+      throw std::invalid_argument("Invalid ip_sublog.add_ipv6(mac_address): "
+                                  + mac_address);
+    }
+
+    if ((time(nullptr) - creation_time) < SUBLOG_LENGTH)
+    {
+      filter->insert(mac_address + ipv6_address);
+    }
+    else
+    {
+      throw std::out_of_range("Attempt to insert ipv6 beyond ip_sublog timespan");
+    }
+  }
+
+  bool has_ipv6(std::string mac_address,
+                std::string ipv6_address) const
+  {
+    if (!valid_mac(mac_address))
+    {
+      throw std::invalid_argument("Invalid ip_sublog.has_ipv6(mac_address): "
+                                  + mac_address);
+    }
+
+    if (!valid_ipv6(ipv6_address))
+    {
+      throw std::invalid_argument("Invalid ip_sublog.has_ipv6(ipv6_address): "
+                                  + ipv6_address);
+    }
+
+    return filter->contains(mac_address + ipv6_address);
+  }
 };
 
 // log of sublogs
@@ -132,7 +166,7 @@ public:
 
   bool has_ipv4_connection(std::string mac_address,
                            uint16_t port,
-                           time_t timestamp)
+                           time_t timestamp) const
   {
     int i = 0;
     for(auto it = log.cbegin(); it != log.cend(); it++)
@@ -152,8 +186,6 @@ public:
     }
     throw std::out_of_range("Invalid timestamp - no ipv4 log covering the timestamp's period");
   }
-  // TODO: delete oldest sublog (done at end of timeslot) IFF out of space
-  // TODO: determine relevant sublog by timestamp of connection
-  // TODO: query relevant sublog for connection
-  // TODO: IPv6 stuff
+
+
 };
