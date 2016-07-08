@@ -33,11 +33,6 @@ protected:
     return true;
   }
 
-  bool valid_port(uint16_t port) const
-  {
-    return true; 
-  }
-
   bool valid_ipv6(std::string ipv6) const
   {
     return true;
@@ -70,12 +65,6 @@ public:
                                   + mac_address);
     }
 
-    if (!valid_port(port))
-    {
-      throw std::invalid_argument("Invalid ipv4_sublog.add_connection(port): "
-                                  + std::to_string(port));
-    }
-
     if ((time(nullptr) - creation_time) < SUBLOG_LENGTH)
     {
       std::cout << "    Inserted @ " << time(nullptr) << "\n";
@@ -96,12 +85,6 @@ public:
                                   + mac_address);
     }
 
-    if (!valid_port(port))
-    {
-      throw std::invalid_argument("Invalid ipv4_sublog.has_connection(port): "
-                                  + std::to_string(port));
-    }
-    
     return filter->contains(mac_address + std::to_string(port));
   }
 
