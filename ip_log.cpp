@@ -23,11 +23,12 @@ const unsigned int DEFAULT_CAPACITY = 168; // default number of timeslots' sublo
 class ip_sublog
 {
 protected:
-  bloom_parameters parameters;
-  bloom_filter *filter;
-  time_t creation_time;
+  bloom_parameters parameters; // parameters for Bloom filter
+  bloom_filter *filter;        // Bloom filter for this timeslot (stores both IPv4 and IPv6 connections)
+  time_t creation_time;        // time Bloom filter was instantiated
 
 public:
+  // set parameters and generate Bloom filter
   ip_sublog()
   {
     parameters.projected_element_count = DEFAULT_COUNT;
@@ -45,25 +46,15 @@ public:
     return creation_time;
   }
 
-  // TODO: fix these functions
-  bool valid_mac(std::string mac) const
-  {
-    return true;
-  }
-
-  bool valid_ipv6(std::string ipv6) const
-  {
-    return true;
-  }
-
   void add_ipv4(std::string mac_address,
                 uint16_t port)
   {
+    // insert the connection IFF still within duration of sublog
     if ((time(nullptr) - creation_time) < SUBLOG_LENGTH)
     {
-      std::cout << "    Inserted @ " << time(nullptr) << "\n";
       filter->insert(mac_address + std::to_string(port));
     }
+    // otherwise, notify ip_log to create a new sublog
     else
     {
       throw std::out_of_range("Attempt to insert ipv6 beyond ip_sublog timespan");
@@ -100,8 +91,19 @@ public:
 class ip_log
 {
 private:
-  std::deque<ip_sublog> log;
-  unsigned int capacity;  // number of timeslots' sublogs the log will store
+  std::deque<ip_sublog> log; // double-ended que of timeslots' sublogs
+  unsigned int capacity;     // number of timeslots' sublogs the log will store
+
+  // TODO: fix these functions
+  bool valid_mac(std::string mac) const
+  {
+    return true;
+  }
+
+  bool valid_ipv6(std::string ipv6) const
+  {
+    return true;
+  }
 
 public:
   ip_log(unsigned int c=DEFAULT_CAPACITY)
@@ -112,18 +114,22 @@ public:
   void add_ipv4_connection(std::string mac_address,
                            uint16_t port)
   {
+    // check for invalid MAC addresses
     if (!valid_mac(mac_address))
     {
       throw std::invalid_argument("Invalid ip_log.add_ipv4_connection(mac_address): "
                                   + mac_address);
     }
 
+    // instantiate log with first sublog
     if (log.size() == 0)
     {
       ip_sublog *sublog = new ip_sublog;
       log.push_back(*sublog);
     }
 
+    // add connection to current Bloom filter or, if past timeslot duration,
+    // create new filter and add to that
     try
     {
       log.back().add_ipv4(mac_address, port);
@@ -150,6 +156,7 @@ public:
                                   + mac_address);
     }
 
+    // find the log containing the time of the connection to check
     for(auto it = log.cbegin(); it != log.cend(); it++)
     {
       // compare timestamp and creation times to get correct log
@@ -187,13 +194,13 @@ public:
 
     try
     {
-      log.back().add_ipv4(mac_address, port);
+      log.back().add_ipv6(mac_address, ipv6_address);
     }
     catch (const std::out_of_range& e)
     {
       ip_sublog *sublog = new ip_sublog;
       log.push_back(*sublog);
-      log.back().add_ipv4(mac_address, port);
+      log.back().add_ipv6(mac_address, ipv6_address);
       if (log.size() == capacity)
       {
         log.pop_front();
@@ -224,7 +231,7 @@ public:
           timestamp - it->get_creation_time() < SUBLOG_LENGTH)
       {
         // check for MAC+port combination in log
-        return it->has_ipv4(mac_address, port);
+        return it->has_ipv6(mac_address, ipv6_address);
       }
     }
 
