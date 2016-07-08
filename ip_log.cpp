@@ -15,46 +15,38 @@
 #include "libs/bloom/bloom_filter.hpp"   // Bloom filter, by Arash Partow
 
 const int SUBLOG_LENGTH = 5;             // sublog length in seconds, TODO: change to 3600
-const int DEFAULT_COUNT = 1000000;       // default max capacity for Bloom filter
+const int DEFAULT_COUNT = 2000000;       // default max capacity for Bloom filter
 const float DEFAULT_PROBABILITY = 0.001; // default probability for Bloom filter false positive
 
-// parent class for IPv4 and IPv6 sublogs
-class ip_sublog_parent
+// sublog for each timeslot in log 
+class ip_sublog
 {
 protected:
   bloom_parameters parameters;
   bloom_filter *filter;
   time_t creation_time;
 
-  // TODO: fix this function
-  bool valid_mac(std::string) const
+  // TODO: fix these functions
+  bool valid_mac(std::string mac) const
+  {
+    return true;
+  }
+
+  bool valid_port(uint16_t port) const
+  {
+    return true; 
+  }
+
+  bool valid_ipv6(std::string ipv6) const
   {
     return true;
   }
 
 public:
-  ip_sublog_parent(int count,
-                   float probability)
+  ip_sublog()
   {
-    if (count > 0)
-    {
-      parameters.projected_element_count = count;
-    }
-    else
-    {
-      throw std::invalid_argument("Invalid ip_sublog_parent.projected_element_count: "
-                                  + std::to_string(count));
-    }
-
-    if (probability > -1.0 && probability < 1.0)
-    {
-      parameters.false_positive_probability = probability;
-    }
-    else
-    {
-      throw std::invalid_argument("Invalid ip_sublog_parent.false_positive_probability: "
-                                  + std::to_string(probability));
-    }
+    parameters.projected_element_count = DEFAULT_COUNT;
+    parameters.false_positive_probability = DEFAULT_PROBABILITY;
 
     parameters.compute_optimal_parameters();
 
@@ -67,27 +59,9 @@ public:
   {
     return creation_time;
   }
-};
 
-// child class for IPv4 sublog
-class ipv4_sublog
-: public ip_sublog_parent
-{
-private:
-  bool valid_port(uint16_t port) const
-  {
-    return true; 
-  }
-  
-public:
-  ipv4_sublog()
-  : ip_sublog_parent(DEFAULT_COUNT, DEFAULT_PROBABILITY) {}
-
-  ipv4_sublog(int count, float probability)
-  : ip_sublog_parent(count, probability) {}
-
-  void add_connection(std::string mac_address,
-                      uint16_t port)
+  void add_ipv4(std::string mac_address,
+                uint16_t port)
   {
     if (!valid_mac(mac_address))
     {
@@ -112,8 +86,8 @@ public:
     }
   }
 
-  bool has_connection(std::string mac_address,
-                      uint16_t port) const
+  bool has_ipv4(std::string mac_address,
+                uint16_t port) const
   {
     if (!valid_mac(mac_address))
     {
@@ -129,83 +103,36 @@ public:
     
     return filter->contains(mac_address + std::to_string(port));
   }
+
+  // TODO: add_ipv6
+  // TODO: has_ipv6
 };
 
-// TODO: child class for IPv6 sublog
-class ipv6_sublog
-: public ip_sublog_parent
-{
-private:
-  // TODO: validate IPv6 address
-  bool valid_ipv6(std::string ipv6_address) const
-  {
-    return true;
-  }
-
-public:
-  ipv6_sublog()
-  : ip_sublog_parent(DEFAULT_COUNT, DEFAULT_PROBABILITY) {}
-
-  ipv6_sublog(int count, float probability)
-  : ip_sublog_parent(count, probability) {}
-
-  void add_connection(std::string mac_address,
-                      std::string ipv6_address)
-  {
-    if (!valid_mac(mac_address))
-    {
-      throw std::invalid_argument("Invalid ipv6_sublog.add_connection(mac_address): "
-                                  + mac_address);
-    }
-
-    if (!valid_ipv6(ipv6_address))
-    {
-      // TODO: include printed ipv6_address
-      throw std::invalid_argument("Invalid ipv6_sublog.add_connection(ipv6_address)");
-    }
-
-    if ((time(nullptr) - creation_time) < SUBLOG_LENGTH)
-    {
-      filter->insert(mac_address + ipv6_address);
-    }
-    else
-    {
-      throw std::out_of_range("Beyond ipv6 sublog length");
-    }
-  }
-
-  bool has_connection(std::string mac_address,
-                      std::string ipv6_address)
-  {
-    return false;
-  }
-};
- 
+// log of sublogs
 class ip_log
 {
 private:
-  std::deque<ipv4_sublog> ipv4_log;
-  std::deque<ipv6_sublog> ipv6_log;
+  std::deque<ip_sublog> log;
 
 public:
   void add_ipv4_connection(std::string mac_address,
                            uint16_t port)
   {
-    if (ipv4_log.size() == 0)
+    if (log.size() == 0)
     {
-      ipv4_sublog *sublog = new ipv4_sublog;
-      ipv4_log.push_back(*sublog);
+      ip_sublog *sublog = new ip_sublog;
+      log.push_back(*sublog);
     }
 
     try
     {
-      ipv4_log.back().add_connection(mac_address, port);
+      log.back().add_ipv4(mac_address, port);
     }
     catch (const std::out_of_range& e)
     {
-      ipv4_sublog *sublog = new ipv4_sublog;
-      ipv4_log.push_back(*sublog);
-      ipv4_log.back().add_connection(mac_address, port);
+      ip_sublog *sublog = new ip_sublog;
+      log.push_back(*sublog);
+      log.back().add_ipv4(mac_address, port);
     }
   }
 
@@ -214,22 +141,19 @@ public:
                            time_t timestamp)
   {
     int i = 0;
-    for(auto it = ipv4_log.cbegin(); it != ipv4_log.cend(); it++)
+    for(auto it = log.cbegin(); it != log.cend(); it++)
     {
       std::cout << "    sublog: " << i++ << "\n";
       std::cout << "      creation_time: " << it->get_creation_time() << "\n";
       std::cout << "    timestamp: " << timestamp << "\n";
-      std::cout << "    front().has_connection(): " << ipv4_log.front().has_connection(mac_address, port) << "\n";
-      std::cout << "    back().has_connection(): " << ipv4_log.back().has_connection(mac_address, port) << "\n";
-      std::cout << "    front().has_connection(): " << ipv4_log.front().has_connection(mac_address, port) << "\n";
-      std::cout << "    back().has_connection(): " << ipv4_log.back().has_connection(mac_address, port) << "\n";
+      std::cout << "    front().has_connection(): " << log.front().has_ipv4(mac_address, port) << "\n";
+      std::cout << "    back().has_connection(): " << log.back().has_ipv4(mac_address, port) << "\n";
       // compare timestamp and creation times to get correct log
       if (timestamp >= it->get_creation_time() &&
           timestamp - it->get_creation_time() < SUBLOG_LENGTH)
       {
        // check for MAC+port combination in log
-        bool ret = it->has_connection(mac_address, port);
-        return ret;
+        return it->has_ipv4(mac_address, port);
       }
     }
     throw std::out_of_range("Invalid timestamp - no ipv4 log covering the timestamp's period");

@@ -10,11 +10,11 @@
 int main()
 {
   // test ipv4_sublog
-  ipv4_sublog ipv4_log(1000000, 0.001);
+  ip_sublog ipv4_log;
   std::cout << "Testing: ipv4_sublog\n";
-  ipv4_log.add_connection("aa-bb-cc-dd-ee-ff", 10);
+  ipv4_log.add_ipv4("aa-bb-cc-dd-ee-ff", 10);
   std::cout << "  add_connection(\"aa-bb-cc-dd-ee-ff\", 10)\n";
-  std::cout << "  has_connection: " << ipv4_log.has_connection("aa-bb-cc-dd-ee-ff", 10) << "\n";
+  std::cout << "  has_connection: " << ipv4_log.has_ipv4("aa-bb-cc-dd-ee-ff", 10) << "\n";
   std::cout << "  sizeof(): " << sizeof(ipv4_log) << " bytes\n";
   // TODO: display current memory usage
   // TODO: delete ipv4_sublog?
