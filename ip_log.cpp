@@ -6,6 +6,7 @@
 #include <arpa/inet.h>    // convert IPv6 strings <-> sockaddr_in6
 #include <exception>      // exception handling
 #include <iostream>       // output
+#include <memory>         // unique_ptr
 #include <netinet/in.h>   // sockaddr_in6 IPv6 struct
 #include <queue>          // basis for log-of-sublogs
 #include <string>         // string class
@@ -24,7 +25,7 @@ class ip_sublog
 {
 protected:
   bloom_parameters parameters; // parameters for Bloom filter
-  bloom_filter *filter;        // Bloom filter for this timeslot (stores both IPv4 and IPv6 connections)
+  std::shared_ptr<bloom_filter> filter; // Bloom filter for this timeslot (stores IPv4 and IPv6)
   time_t creation_time;        // time Bloom filter was instantiated
 
 public:
@@ -36,8 +37,7 @@ public:
 
     parameters.compute_optimal_parameters();
 
-    filter = new bloom_filter(parameters);
-    
+    filter.reset(new bloom_filter(parameters));
     creation_time = time(nullptr);
   }
 
