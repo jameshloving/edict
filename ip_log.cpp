@@ -23,7 +23,7 @@ class ip_sublog_parent
 {
 protected:
   bloom_parameters parameters;
-  bloom_filter filter;
+  bloom_filter *filter;
   time_t creation_time;
 
   // TODO: fix this function
@@ -58,8 +58,7 @@ public:
 
     parameters.compute_optimal_parameters();
 
-    bloom_filter filter_temp(parameters);
-    filter = filter_temp;
+    filter = new bloom_filter(parameters);
     
     creation_time = time(nullptr);
   }
@@ -129,7 +128,7 @@ public:
     if ((time(nullptr) - creation_time) < SUBLOG_LENGTH)
     {
       std::cout << "    Inserted @ " << time(nullptr) << "\n";
-      filter.insert(source);
+      filter->insert(source);
     }
     else
     {
@@ -154,7 +153,7 @@ public:
                                   + std::to_string(port));
     }
     
-    return filter.contains(source);
+    return filter->contains(source);
   }
 };
 
@@ -203,7 +202,7 @@ public:
 
     if ((time(nullptr) - creation_time) < SUBLOG_LENGTH)
     {
-      filter.insert(source);
+      filter->insert(source);
     }
     else
     {
@@ -229,9 +228,9 @@ public:
                            uint16_t port)
   {
     if (ipv4_log.size() == 0)
-    { 
-      ipv4_sublog sublog;
-      ipv4_log.push_back(sublog);
+    {
+      ipv4_sublog *sublog = new ipv4_sublog;
+      ipv4_log.push_back(*sublog);
     }
 
     try
@@ -240,8 +239,8 @@ public:
     }
     catch (const std::out_of_range& e)
     {
-      ipv4_sublog sublog;
-      ipv4_log.push_back(sublog);
+      ipv4_sublog *sublog = new ipv4_sublog;
+      ipv4_log.push_back(*sublog);
       ipv4_log.back().add_connection(mac_address, port);
     }
   }
@@ -251,20 +250,22 @@ public:
                            time_t timestamp)
   {
     int i = 0;
-    for(auto it = ipv4_log.cbegin(); it != ipv4_log.cend(); ++it)
+    for(auto it = ipv4_log.cbegin(); it != ipv4_log.cend(); it++)
     {
       std::cout << "    sublog: " << i++ << "\n";
       std::cout << "      creation_time: " << it->get_creation_time() << "\n";
       std::cout << "    timestamp: " << timestamp << "\n";
       std::cout << "    front().has_connection(): " << ipv4_log.front().has_connection(mac_address, port) << "\n";
       std::cout << "    back().has_connection(): " << ipv4_log.back().has_connection(mac_address, port) << "\n";
+      std::cout << "    front().has_connection(): " << ipv4_log.front().has_connection(mac_address, port) << "\n";
+      std::cout << "    back().has_connection(): " << ipv4_log.back().has_connection(mac_address, port) << "\n";
       // compare timestamp and creation times to get correct log
-      // TODO: reverse timestamp & SUBLOG_LENGTH in second IF CHECK to mirror line 204
       if (timestamp >= it->get_creation_time() &&
           timestamp - it->get_creation_time() < SUBLOG_LENGTH)
       {
-        // check for MAC+port combination in log
-        return it->has_connection(mac_address, port);
+       // check for MAC+port combination in log
+        bool ret = it->has_connection(mac_address, port);
+        return ret;
       }
     }
     throw std::out_of_range("Invalid timestamp - no ipv4 log covering the timestamp's period");
