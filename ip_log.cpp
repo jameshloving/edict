@@ -14,9 +14,10 @@
 
 #include "libs/bloom/bloom_filter.hpp"   // Bloom filter, by Arash Partow
 
-const int SUBLOG_LENGTH = 5;             // sublog length in seconds, TODO: change to 3600
-const int DEFAULT_COUNT = 2000000;       // default max capacity for Bloom filter
-const float DEFAULT_PROBABILITY = 0.001; // default probability for Bloom filter false positive
+const int SUBLOG_LENGTH = 5;               // sublog length in seconds, TODO: change to 3600
+const int DEFAULT_COUNT = 2000000;         // default max capacity for Bloom filter
+const float DEFAULT_PROBABILITY = 0.001;   // default probability for Bloom filter false positive
+const unsigned int DEFAULT_CAPACITY = 168; // default number of timeslots' sublogs ip_log stores
 
 // sublog for each timeslot in log 
 class ip_sublog
@@ -113,8 +114,14 @@ class ip_log
 {
 private:
   std::deque<ip_sublog> log;
+  unsigned int capacity;  // number of timeslots' sublogs the log will store
 
 public:
+  ip_log(unsigned int c=DEFAULT_CAPACITY)
+  {
+    capacity = c;
+  }
+
   void add_ipv4_connection(std::string mac_address,
                            uint16_t port)
   {
@@ -133,6 +140,10 @@ public:
       ip_sublog *sublog = new ip_sublog;
       log.push_back(*sublog);
       log.back().add_ipv4(mac_address, port);
+      if (log.size() == capacity)
+      {
+        log.pop_front();
+      }
     }
   }
 
