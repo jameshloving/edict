@@ -246,8 +246,19 @@ public:
       if (timestamp >= it->get_creation_time() &&
           timestamp - it->get_creation_time() < SUBLOG_LENGTH)
       {
-        // check for MAC+port combination in log
-        return it->has_ipv6(mac_address, ipv6_address);
+        // fuzzy-check for MAC+address combination in log (and potentially neighbors)
+        // if timestamp is in first 10sec of sublog period, check previous sublog AND current sublog
+        if (timestamp - it->get_creation_time() < SUBLOG_FUZZINESS) {
+          return (it->has_ipv6(mac_address, ipv6_address) || (it-1)->has_ipv6(mac_address, ipv6_address));
+        }
+        // if timestamp is in last 10sec of sublog period, check next sublog AND current sublog
+        else if (timestamp - it->get_creation_time() > SUBLOG_LENGTH - SUBLOG_FUZZINESS) {
+          return (it->has_ipv6(mac_address, ipv6_address) || (it+1)->has_ipv6(mac_address, ipv6_address));
+        }
+        // timestamp is solidly in current sublog, so only check current sublog
+        else {
+          return it->has_ipv6(mac_address, ipv6_address);
+        }
       }
     }
 
