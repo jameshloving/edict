@@ -16,6 +16,7 @@
 #include "libs/bloom/bloom_filter.hpp"   // Bloom filter, by Arash Partow
 
 const int SUBLOG_LENGTH = 5;               // sublog length in seconds, TODO: change to 3600
+const int SUBLOG_FUZZINESS = 10;           // number of seconds of fuzziness in checking sublogs
 const int DEFAULT_COUNT = 2000000;         // default max capacity for Bloom filter
 const float DEFAULT_PROBABILITY = 0.001;   // default probability for Bloom filter false positive
 const unsigned int DEFAULT_CAPACITY = 168; // default number of timeslots' sublogs ip_log stores
@@ -163,11 +164,26 @@ public:
       if (timestamp >= it->get_creation_time() &&
           timestamp - it->get_creation_time() < SUBLOG_LENGTH)
       {
-        // check for MAC+port combination in log
-        return it->has_ipv4(mac_address, port);
+        // fuzzy-check for MAC+port combination in log (and potentially neighbors)
+        // if timestamp is in first 10sec of sublog period, check previous sublog AND current sublog
+        if (timestamp - it->get_creation_time() < SUBLOG_FUZZINESS) {
+          return (it->has_ipv4(mac_address, port) || (it-1)->has_ipv4(mac_address, port));
+        }
+        // if timestamp is in last 10sec of sublog period, check next sublog AND current sublog
+        else if (timestamp - it->get_creation_time() > SUBLOG_LENGTH - SUBLOG_FUZZINESS) {
+          return (it->has_ipv4(mac_address, port) || (it+1)->has_ipv4(mac_address, port));
+        }
+        // timestamp is solidly in current sublog, so only check current sublog
+        else {
+          return it->has_ipv4(mac_address, port);
+        }
       }
     }
+    
+    // fuzzy-check log boundaries (to account for different time sources and delay)
+    // if timestamp is in first 1%, check previous sublog
 
+    // if timestamp is in last 1%, check next sublog
     throw std::out_of_range("Invalid timestamp - no ipv4 log covering the timestamp's period");
   }
 
