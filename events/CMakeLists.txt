@@ -15,4 +15,3 @@ endif()
 # add the executable
 add_executable(edict edict.cpp)
 target_link_libraries(edict netfilter_log)
-#target_link_libraries(edict netfilter_log_ipulog)
