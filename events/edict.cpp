@@ -2,7 +2,8 @@
 #include <map>
 #include <netinet/in.h>
 #include <unistd.h>
-#include <stdio.h>
+#include <iostream>
+#include <sstream>
 #include <stdlib.h>
 #include <time.h>
 
@@ -48,27 +49,51 @@ struct device_log_entry
 
 std::map<std::string, struct device_log_entry> device_log;
 
+ip_log conn_log;
+
+std::string hexStr_to_charStr(std::string hexStr)
+{
+	std::stringstream ss;
+	std::string charStr;
+	unsigned int buffer;
+	int offset = 0;
+
+	hexStr = hexStr.substr(2, hexStr.length()-2);
+
+	while (offset < hexStr.length())
+	{
+		ss.clear();
+		ss << std::hex << hexStr.substr(offset, 2);
+		ss >> buffer;
+		charStr.push_back(static_cast<unsigned char>(buffer));
+		offset += 2;
+	}
+	
+	return charStr;
+}
+
 static int print_pkt(struct nflog_data *ldata)
 {
 	struct nfulnl_msg_packet_hdr *ph = nflog_get_msg_packet_hdr(ldata);
 	char *payload;
 	nflog_get_payload(ldata, &payload);	
 
-	// additions for testing
 	struct nfulnl_msg_packet_hw *packet_hw = nflog_get_packet_hw(ldata);
 	struct iphdr_v4 *packet_header_v4 = (struct iphdr_v4*)payload;
 	struct iphdr_v6 *packet_header_v6;
 
-	printf("S_MAC:%u ", &packet_hw->hw_addr);
+	std::string mac_address = static_cast<std::ostringstream*>( &(std::ostringstream() << &packet_hw->hw_addr) )->str();
+	mac_address = mac_address.substr(2, mac_address.length());
+	std::cout << "S_MAC:" << mac_address << " ";
 	printf("Version:%u ", packet_header_v4->version);
 
-	/**
-	if (!device_log.count(std::to_string(static_cast<unsigned long>(&packet_hw->hw_addr))))
+	if (!device_log.count(mac_address))
 	{
-		struct device_log_entry = {};
-		device_log_entry.make_model = ""; // TODO: get make_model from wifi code
-		device_log_entry.first_seen = time(nullptr);
-		device_log.insert(std::to_string(&packet_hw->hw_addr), device_log_entry);
+		struct device_log_entry entry;
+		entry.make_model = ""; // TODO: get make_model from wifi code
+		entry.first_seen = time(nullptr);
+		device_log.insert(std::pair<std::string, struct device_log_entry>(mac_address, entry));
+		//printf("\n*** New Device! ***\n");
 	}
 
 	if (packet_header_v4->version == 4)
@@ -76,28 +101,23 @@ static int print_pkt(struct nflog_data *ldata)
 		char str[INET_ADDRSTRLEN];
 		struct in_addr *saddr = (struct in_addr*)&(packet_header_v4->saddr);
 		inet_ntop(AF_INET, saddr, str, INET_ADDRSTRLEN);
-		printf("S_IPv4:%s ", str);
+		std::cout << "S_IPv4:" << str << " ";
 		
 		__u16 *source_port = (__u16*)(packet_header_v4 + (packet_header_v4->ihl * 4));	
-		__u16 *dest_port = (__u16*)(packet_header_v4 + (packet_header_v4->ihl * 4) + 2);
-		printf("  [&header:%u", &packet_header_v4);
-		printf(", ihl:%u]  ", packet_header_v4->ihl);
 		printf("S_Port:%u ", *source_port);
-		printf("D_Port:%u ", *dest_port);
-		// TODO: log.add_ipv4_connection(string_mac_address, uint16_t_source_port)
-		
+
+		conn_log.add_ipv4_connection(mac_address, *source_port);
 	}
 	else if (packet_header_v4->version == 6)
 	{
 		packet_header_v6 = (struct iphdr_v6*)payload;
-		//printf("S_IPv6:%u\n",packet_header_v6->saddr);
-		// TODO: add ip6tables rule
-		// TODO: get source port
+		printf("S_IPv6:%s ",packet_header_v6->saddr); // TODO: fix this
+		__u16 *source_port = (__u16*)(packet_header_v4 + (packet_header_v4->ihl * 4));	
+		printf("S_Port:%u ", *source_port);
 		// TODO: log.add_ipv6_connection(string_mac_address, string_ipv6_address)
 	}
-	**/
 
-	printf("\n");
+	std::cout << "\n";
 	return 0;
 }
 
@@ -122,7 +142,7 @@ int main(int argc, char **argv)
 		fprintf(stderr, "error during nflog_open()\n");
 		exit(1);
 	}
-
+	
 	printf("unbinding existing nf_log handler for AF_INET (if any)\n");
 	if (nflog_unbind_pf(h, AF_INET) < 0) {
 		fprintf(stderr, "error nflog_unbind_pf()\n");
@@ -163,7 +183,7 @@ int main(int argc, char **argv)
 	nflog_unbind_group(qh);
 
 #ifdef INSANE
-	/* norally, applications SHOULD NOT issue this command,
+	/* normally, applications SHOULD NOT issue this command,
 	 * since it detaches other programs/sockets from AF_INET, too ! */
 	printf("unbinding from AF_INET\n");
 	nflog_unbind_pf(h, AF_INET);
