@@ -1,0 +1,1 @@
+/usr/bin/c++    -std=c++11    CMakeFiles/edict.dir/edict.cpp.o  -o edict -rdynamic -lnetfilter_log 

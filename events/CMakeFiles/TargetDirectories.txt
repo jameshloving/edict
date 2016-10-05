@@ -1,0 +1,1 @@
+/home/ubuntu/edict/events/CMakeFiles/edict.dir

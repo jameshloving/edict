@@ -25,13 +25,25 @@ void handle_packet(ulog_packet_msg_t *pkt)
 	
 	if (pkt->mac_len)
 	{
+		// if MAC address is in device log
+		// then, if IPv4
+		//   then, log (MAC address + source port) in bloom filter
+		//   else, log (MAC address + source IPv6) in bloom filter	
+		// else, try to identify device
+		// and if IPv4
+		//   then, log (MAC address + source port) in bloom filter
+		//   else, log (MAC address + source IPv6) in bloom filter
 		printf("mac=");
 		p = pkt->mac;
 		for (i = 0; i < pkt->mac_len; i++, p++)
 			printf("%02x%c", *p, i==pkt->mac_len-1 ? ' ':':');
 	}
 	printf("\n");
-
+	//printf("indev_name=%s, ", pkt->indev_name);
+	//printf("outdev_name=%s, ", pkt->outdev_name);
+	//printf("payload=%s\ndd", pkt->payload[1]);
+	char *py = &(pkt->payload);
+	printf("py=%s\n", py);
 }
 
 int main(int argc, char *argv[])
@@ -42,8 +54,8 @@ int main(int argc, char *argv[])
 	ulog_packet_msg_t *upkt;
 	int i;
 
-	if (argc != 4) {
-		fprintf(stderr, "Usage: %s count group \n", argv[0]);
+	if (argc != 2) {
+		fprintf(stderr, "Usage: %s group \n", argv[0]);
 		exit(2);
 	}
 
@@ -53,7 +65,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	
 	/* create ipulog handle */
-	h = ipulog_create_handle(ipulog_group2gmask(atoi(argv[2])), 65535);
+	h = ipulog_create_handle(ipulog_group2gmask(atoi(argv[1])), 65535);
 	if (!h)
 	{
 		/* if some error occurrs, print it to stderr */
@@ -62,13 +74,12 @@ int main(int argc, char *argv[])
 	}
 
 	/* loop receiving packets and handling them over to handle_packet */
-	for (i = 0; i < atoi(argv[1]); i++) {
+	for (;;) {
 		len = ipulog_read(h, buf, MYBUFSIZ, 1);
 		if (len <= 0) {
 			ipulog_perror("ulog_test: short read");
 			exit(1);
 		}
-		printf("%d bytes received\n", len);
 		while ((upkt = ipulog_get_packet(h, buf, len)) != NULL) {
 			handle_packet(upkt);
 		}

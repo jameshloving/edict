@@ -13,9 +13,9 @@
 #include <stdint.h>       // int vars of atypical size (16b, 32b)
 #include <time.h>         // time(), etc.
 
-#include "libs/bloom/bloom_filter.hpp"   // Bloom filter, by Arash Partow
+#include "../bloom/bloom_filter.hpp"   // Bloom filter, by Arash Partow
 
-const int SUBLOG_LENGTH = 5;               // sublog length in seconds, TODO: change to 3600
+const int SUBLOG_LENGTH = 3600;            // sublog length in seconds
 const int SUBLOG_FUZZINESS = 10;           // number of seconds of fuzziness in checking sublogs
 const int DEFAULT_COUNT = 2000000;         // default max capacity for Bloom filter
 const float DEFAULT_PROBABILITY = 0.001;   // default probability for Bloom filter false positive
@@ -179,11 +179,7 @@ public:
         }
       }
     }
-    
-    // fuzzy-check log boundaries (to account for different time sources and delay)
-    // if timestamp is in first 1%, check previous sublog
 
-    // if timestamp is in last 1%, check next sublog
     throw std::out_of_range("Invalid timestamp - no ipv4 log covering the timestamp's period");
   }
 

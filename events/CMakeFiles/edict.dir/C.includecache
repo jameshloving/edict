@@ -1,0 +1,22 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/ubuntu/edict/events/edict.c
+stdio.h
+-
+stdlib.h
+-
+unistd.h
+-
+arpa/inet.h
+-
+netinet/in.h
+-
+libnetfilter_log/libnetfilter_log.h
+-
+

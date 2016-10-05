@@ -1,0 +1,60 @@
+unbinding existing nf_log handler for AF_INET (if any)
+binding nfnetlink_log to AF_INET
+binding this socket to group 2
+setting copy_packet mode
+registering callback for group 2
+going into main loop
+pkt received (len=3412)
+S_MAC:4 Version:4 S_IPv4:698496128  [&header:3731529944, ihl:5]  S_Port:0D_Port:4224
+S_MAC:4 Version:4 S_IPv4:698496128  [&header:3731529944, ihl:5]  S_Port:31482D_Port:16797
+S_MAC:4 Version:4 S_IPv4:698496128  [&header:3731529944, ihl:5]  S_Port:27248D_Port:46815
+S_MAC:4 Version:4 S_IPv4:698496128  [&header:3731529944, ihl:5]  S_Port:47088D_Port:17708
+S_MAC:4 Version:4 S_IPv4:698496128  [&header:3731529944, ihl:5]  S_Port:13531D_Port:47819
+pkt received (len=3100)
+S_MAC:4 Version:4 S_IPv4:698496128  [&header:3731529944, ihl:5]  S_Port:52946D_Port:53603
+S_MAC:4 Version:4 S_IPv4:698496128  [&header:3731529944, ihl:5]  S_Port:56573D_Port:27413
+S_MAC:4 Version:4 S_IPv4:698496128  [&header:3731529944, ihl:5]  S_Port:37360D_Port:62004
+pkt received (len=2328)
+S_MAC:4 Version:4 S_IPv4:698496128  [&header:3731529944, ihl:5]  S_Port:16842D_Port:56069
+S_MAC:4 Version:4 S_IPv4:698496128  [&header:3731529944, ihl:5]  S_Port:40711D_Port:52650
+pkt received (len=2376)
+S_MAC:4 Version:4 S_IPv4:698496128  [&header:3731529944, ihl:5]  S_Port:7649D_Port:40192
+S_MAC:4 Version:4 S_IPv4:698496128  [&header:3731529944, ihl:5]  S_Port:54711D_Port:53919
+pkt received (len=3188)
+S_MAC:4 Version:4 S_IPv4:698496128  [&header:3731529944, ihl:5]  S_Port:56360D_Port:60736
+S_MAC:4 Version:4 S_IPv4:698496128  [&header:3731529944, ihl:5]  S_Port:46660D_Port:46150
+pkt received (len=2892)
+S_MAC:4 Version:4 S_IPv4:698496128  [&header:3731529944, ihl:5]  S_Port:49931D_Port:43101
+S_MAC:4 Version:4 S_IPv4:698496128  [&header:3731529944, ihl:5]  S_Port:0D_Port:31753
+S_MAC:4 Version:4 S_IPv4:698496128  [&header:3731529944, ihl:5]  S_Port:22685D_Port:34859
+S_MAC:4 Version:4 S_IPv4:698496128  [&header:3731529944, ihl:5]  S_Port:32033D_Port:7657
+S_MAC:4 Version:4 S_IPv4:698496128  [&header:3731529944, ihl:5]  S_Port:59489D_Port:1509
+pkt received (len=2328)
+S_MAC:4 Version:4 S_IPv4:698496128  [&header:3731529944, ihl:5]  S_Port:22899D_Port:44151
+S_MAC:4 Version:4 S_IPv4:698496128  [&header:3731529944, ihl:5]  S_Port:35275D_Port:11973
+pkt received (len=2376)
+S_MAC:4 Version:4 S_IPv4:698496128  [&header:3731529944, ihl:5]  S_Port:6637D_Port:22392
+S_MAC:4 Version:4 S_IPv4:698496128  [&header:3731529944, ihl:5]  S_Port:35014D_Port:4250
+pkt received (len=2328)
+S_MAC:4 Version:4 S_IPv4:698496128  [&header:3731529944, ihl:5]  S_Port:2254D_Port:28967
+S_MAC:4 Version:4 S_IPv4:698496128  [&header:3731529944, ihl:5]  S_Port:16652D_Port:59445
+pkt received (len=2376)
+S_MAC:4 Version:4 S_IPv4:698496128  [&header:3731529944, ihl:5]  S_Port:13082D_Port:35890
+S_MAC:4 Version:4 S_IPv4:698496128  [&header:3731529944, ihl:5]  S_Port:16796D_Port:17002
+pkt received (len=3188)
+S_MAC:4 Version:4 S_IPv4:698496128  [&header:3731529944, ihl:5]  S_Port:53263D_Port:54261
+S_MAC:4 Version:4 S_IPv4:698496128  [&header:3731529944, ihl:5]  S_Port:57093D_Port:43683
+pkt received (len=3676)
+S_MAC:4 Version:4 S_IPv4:698496128  [&header:3731529944, ihl:5]  S_Port:15893D_Port:58834
+S_MAC:4 Version:4 S_IPv4:698496128  [&header:3731529944, ihl:5]  S_Port:15722D_Port:28439
+S_MAC:4 Version:4 S_IPv4:698496128  [&header:3731529944, ihl:5]  S_Port:0D_Port:31753
+S_MAC:4 Version:4 S_IPv4:698496128  [&header:3731529944, ihl:5]  S_Port:7729D_Port:10858
+S_MAC:4 Version:4 S_IPv4:698496128  [&header:3731529944, ihl:5]  S_Port:12964D_Port:17456
+S_MAC:4 Version:4 S_IPv4:698496128  [&header:3731529944, ihl:5]  S_Port:42385D_Port:55402
+S_MAC:4 Version:4 S_IPv4:698496128  [&header:3731529944, ihl:5]  S_Port:20554D_Port:46302
+pkt received (len=3636)
+S_MAC:4 Version:4 S_IPv4:698496128  [&header:3731529944, ihl:5]  S_Port:53269D_Port:62780
+S_MAC:4 Version:4 S_IPv4:698496128  [&header:3731529944, ihl:5]  S_Port:10947D_Port:3634
+S_MAC:4 Version:4 S_IPv4:698496128  [&header:3731529944, ihl:5]  S_Port:14571D_Port:22444
+S_MAC:4 Version:4 S_IPv4:698496128  [&header:3731529944, ihl:5]  S_Port:3219D_Port:0
+S_MAC:4 Vers
