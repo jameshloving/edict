@@ -111,7 +111,9 @@ static int print_pkt(struct nflog_data *ldata)
 	else if (packet_header_v4->version == 6)
 	{
 		packet_header_v6 = (struct iphdr_v6*)payload;
-		printf("S_IPv6:%s ",packet_header_v6->saddr); // TODO: fix this
+		std::string source_address(packet_header_v6->saddr, packet_header_v6->saddr + sizeof packet_header_v6->saddr / sizeof packet_header_v6->saddr[0]);
+		//printf("S_IPv6:%s ", source_address); // TODO: fix this
+		std::cout << "S_IPv6:" << source_address << " ";
 		__u16 *source_port = (__u16*)(packet_header_v4 + (packet_header_v4->ihl * 4));	
 		printf("S_Port:%u ", *source_port);
 		// TODO: log.add_ipv6_connection(string_mac_address, string_ipv6_address)
