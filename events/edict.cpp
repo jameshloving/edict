@@ -1,5 +1,5 @@
 #include <arpa/inet.h>
-#include <map>
+#include <unordered_map>
 #include <netinet/in.h>
 #include <unistd.h>
 #include <iostream>
@@ -48,7 +48,7 @@ struct device_log_entry
     time_t first_seen;      
 };
 
-std::map<std::string, struct device_log_entry> device_log;
+std::unordered_map<std::string, struct device_log_entry> device_log;
 
 ip_log conn_log;
 
