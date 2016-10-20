@@ -48,9 +48,13 @@ struct device_log_entry
     time_t first_seen;      
 };
 
-std::unordered_map<std::string, struct device_log_entry> device_log;
-
-ip_log conn_log;
+struct region
+{
+    std::unordered_map<std::string, struct device_log_entry> device_log;
+    ip_log conn_log;
+    int test;
+};
+struct region *shm;
 
 std::string hexStr_to_charStr(std::string hexStr)
 {
@@ -88,12 +92,12 @@ static int print_pkt(struct nflog_data *ldata)
     std::cout << "S_MAC:" << mac_address << " ";
     printf("Version:%u ", packet_header_v4->version);
 
-    if (!device_log.count(mac_address))
+    if (!(shm->device_log.count(mac_address)))
     {
         struct device_log_entry entry;
         entry.make_model = ""; // TODO: get make_model from wifi code
         entry.first_seen = time(nullptr);
-        device_log.insert(std::pair<std::string, struct device_log_entry>(mac_address, entry));
+        shm->device_log.insert(std::pair<std::string, struct device_log_entry>(mac_address, entry));
         //printf("\n*** New Device! ***\n");
     }
 
@@ -107,7 +111,7 @@ static int print_pkt(struct nflog_data *ldata)
         __u16 *source_port = (__u16*)(packet_header_v4 + (packet_header_v4->ihl * 4));  
         printf("S_Port:%u ", *source_port);
 
-        conn_log.add_ipv4_connection(mac_address, *source_port);
+        shm->conn_log.add_ipv4_connection(mac_address, *source_port);
     }
     else if (packet_header_v4->version == 6)
     {
