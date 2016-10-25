@@ -1,6 +1,7 @@
 cmake_minimum_required (VERSION 2.6)
 project (Edict)
  
+# handle different versions of G++ gracefully
 include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
 CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
@@ -12,6 +13,9 @@ else()
         message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
 endif()
 
+# enable debugging
+set(CMAKE_BUILD_TYPE Debug)
+
 # add the executable
 add_executable(edict edict.cpp)
-target_link_libraries(edict netfilter_log)
+target_link_libraries(edict netfilter_log rt)

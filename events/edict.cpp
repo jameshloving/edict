@@ -1,11 +1,13 @@
 #include <arpa/inet.h>
-#include <unordered_map>
-#include <netinet/in.h>
-#include <unistd.h>
+#include <fcntl.h>
 #include <iostream>
+#include <netinet/in.h>
 #include <sstream>
 #include <stdlib.h>
+#include <sys/mman.h>
 #include <time.h>
+#include <unistd.h>
+#include <unordered_map>
 
 #include "../libs/ip_log/ip_log.cpp"
 
@@ -56,6 +58,9 @@ struct region
 };
 struct region *shm;
 
+std::unordered_map<std::string, struct device_log_entry> device_log;
+ip_log conn_log;
+
 std::string hexStr_to_charStr(std::string hexStr)
 {
     std::stringstream ss;
@@ -92,12 +97,14 @@ static int print_pkt(struct nflog_data *ldata)
     std::cout << "S_MAC:" << mac_address << " ";
     printf("Version:%u ", packet_header_v4->version);
 
-    if (!(shm->device_log.count(mac_address)))
+    if (!(device_log.count(mac_address)))
+    //if (!(shm->device_log.count(mac_address)))
     {
         struct device_log_entry entry;
         entry.make_model = ""; // TODO: get make_model from wifi code
         entry.first_seen = time(nullptr);
-        shm->device_log.insert(std::pair<std::string, struct device_log_entry>(mac_address, entry));
+        //shm->device_log.insert(std::pair<std::string, struct device_log_entry>(mac_address, entry));
+        device_log.insert(std::pair<std::string, struct device_log_entry>(mac_address, entry));
         //printf("\n*** New Device! ***\n");
     }
 
@@ -111,7 +118,8 @@ static int print_pkt(struct nflog_data *ldata)
         __u16 *source_port = (__u16*)(packet_header_v4 + (packet_header_v4->ihl * 4));  
         printf("S_Port:%u ", *source_port);
 
-        shm->conn_log.add_ipv4_connection(mac_address, *source_port);
+        conn_log.add_ipv4_connection(mac_address, *source_port);
+        //shm->conn_log.add_ipv4_connection(mac_address, *source_port);
     }
     else if (packet_header_v4->version == 6)
     {
@@ -144,6 +152,7 @@ int main(int argc, char **argv)
     char buf[4096];
     char *payload;
 
+    // setup NFLog
     h = nflog_open();
     if (!h)
     {
@@ -184,6 +193,30 @@ int main(int argc, char **argv)
     printf("registering callback for group 2\n");
     nflog_callback_register(qh, &cb, NULL);
 
+    // Create shared memory object and set its size
+    fd = shm_open("/myregion", O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+    if (fd == -1)
+    {
+        fprintf(stderr, "can't shm_open /myregion\n");
+        exit(1);
+    }
+
+    if (ftruncate(fd, sizeof(struct region)) == -1)
+    {
+        fprintf(stderr, "can't ftruncate fd\n");
+        exit(1);
+    }
+
+    shm = static_cast<struct region *>(mmap(NULL, sizeof(struct region),
+                                            PROT_READ | PROT_WRITE, MAP_SHARED,
+                                            fd, 0));
+    if (shm == MAP_FAILED)
+    {
+        fprintf(stderr, "can't mmap shm\n");
+        exit(1);
+    }
+
+    // process packets as they are received
     printf("going into main loop\n");
     while ((rv = recv(fd, buf, sizeof(buf), 0)) && rv >= 0)
     {
