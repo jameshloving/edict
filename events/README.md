@@ -10,6 +10,7 @@ If you have the conntrack tools installed you should be able to watch conntrack 
 Additionally, make sure you have suitable IPtables rules in place:
 
    `iptables -A INPUT -m conntrack --ctstate NEW -j NFLOG --nflog-group 2`
+   
    `ip6tables -A INPUT -m conntrack --ctstate NEW -j NFLOG --nflog-group 2`
 
 The code in this directory is based entirely off an example program from:
