@@ -52,14 +52,11 @@ struct device_log_entry
 
 struct region
 {
-    std::unordered_map<std::string, struct device_log_entry> device_log;
     ip_log conn_log;
-    int test;
 };
 struct region *shm;
 
 std::unordered_map<std::string, struct device_log_entry> device_log;
-ip_log conn_log;
 
 std::string hexStr_to_charStr(std::string hexStr)
 {
@@ -82,58 +79,65 @@ std::string hexStr_to_charStr(std::string hexStr)
     return charStr;
 }
 
+bool first_processing = true;
+
 static int print_pkt(struct nflog_data *ldata)
 {
-    struct nfulnl_msg_packet_hdr *ph = nflog_get_msg_packet_hdr(ldata);
-    char *payload;
-    nflog_get_payload(ldata, &payload); 
-
-    struct nfulnl_msg_packet_hw *packet_hw = nflog_get_packet_hw(ldata);
-    struct iphdr_v4 *packet_header_v4 = (struct iphdr_v4*)payload;
-    struct iphdr_v6 *packet_header_v6;
-
-    std::string mac_address = static_cast<std::ostringstream*>( &(std::ostringstream() << &packet_hw->hw_addr) )->str();
-    mac_address = mac_address.substr(2, mac_address.length());
-    std::cout << "S_MAC:" << mac_address << " ";
-    printf("Version:%u ", packet_header_v4->version);
-
-    if (!(device_log.count(mac_address)))
-    //if (!(shm->device_log.count(mac_address)))
+    if (first_processing)
     {
-        struct device_log_entry entry;
-        entry.make_model = ""; // TODO: get make_model from wifi code
-        entry.first_seen = time(nullptr);
-        //shm->device_log.insert(std::pair<std::string, struct device_log_entry>(mac_address, entry));
-        device_log.insert(std::pair<std::string, struct device_log_entry>(mac_address, entry));
-        //printf("\n*** New Device! ***\n");
+        struct nfulnl_msg_packet_hdr *ph = nflog_get_msg_packet_hdr(ldata);
+        char *payload;
+        nflog_get_payload(ldata, &payload); 
+
+        struct nfulnl_msg_packet_hw *packet_hw = nflog_get_packet_hw(ldata);
+        struct iphdr_v4 *packet_header_v4 = (struct iphdr_v4*)payload;
+        struct iphdr_v6 *packet_header_v6;
+
+        std::cout << "Time:" << time(nullptr) << " ";
+
+        std::string mac_address = static_cast<std::ostringstream*>( &(std::ostringstream() << &packet_hw->hw_addr) )->str();
+        mac_address = mac_address.substr(2, mac_address.length());
+        std::cout << "S_MAC:" << mac_address << " ";
+        printf("Version:%u ", packet_header_v4->version);
+
+        if (!(device_log.count(mac_address)))
+        {
+            struct device_log_entry entry;
+            entry.make_model = ""; // TODO: get make_model from wifi code
+            entry.first_seen = time(nullptr);
+            device_log.insert(std::pair<std::string, struct device_log_entry>(mac_address, entry));
+            //printf("\n*** New Device! ***\n");
+        }
+
+        if (packet_header_v4->version == 4)
+        {
+            char str[INET_ADDRSTRLEN];
+            struct in_addr *saddr = (struct in_addr*)&(packet_header_v4->saddr);
+            inet_ntop(AF_INET, saddr, str, INET_ADDRSTRLEN);
+            std::cout << "S_IPv4:" << str << " ";
+            
+            __u16 *source_port = (__u16*)(packet_header_v4 + (packet_header_v4->ihl * 4));  
+            printf("S_Port:%u ", *source_port);
+
+            //conn_log.add_ipv4_connection(mac_address, *source_port);
+            shm->conn_log.add_ipv4_connection(mac_address, *source_port);
+        }
+        else if (packet_header_v4->version == 6)
+        {
+            packet_header_v6 = (struct iphdr_v6*)payload;
+            std::string source_address(packet_header_v6->saddr, packet_header_v6->saddr + sizeof packet_header_v6->saddr / sizeof packet_header_v6->saddr[0]);
+            //printf("S_IPv6:%s ", source_address); // TODO: fix this
+            std::cout << "S_IPv6:" << source_address << " ";
+            __u16 *source_port = (__u16*)(packet_header_v4 + (packet_header_v4->ihl * 4));  
+            printf("S_Port:%u ", *source_port);
+            // TODO: log.add_ipv6_connection(string_mac_address, string_ipv6_address)
+        }
+
+        std::cout << "\n";
+        return 0;
     }
 
-    if (packet_header_v4->version == 4)
-    {
-        char str[INET_ADDRSTRLEN];
-        struct in_addr *saddr = (struct in_addr*)&(packet_header_v4->saddr);
-        inet_ntop(AF_INET, saddr, str, INET_ADDRSTRLEN);
-        std::cout << "S_IPv4:" << str << " ";
-        
-        __u16 *source_port = (__u16*)(packet_header_v4 + (packet_header_v4->ihl * 4));  
-        printf("S_Port:%u ", *source_port);
-
-        conn_log.add_ipv4_connection(mac_address, *source_port);
-        //shm->conn_log.add_ipv4_connection(mac_address, *source_port);
-    }
-    else if (packet_header_v4->version == 6)
-    {
-        packet_header_v6 = (struct iphdr_v6*)payload;
-        std::string source_address(packet_header_v6->saddr, packet_header_v6->saddr + sizeof packet_header_v6->saddr / sizeof packet_header_v6->saddr[0]);
-        //printf("S_IPv6:%s ", source_address); // TODO: fix this
-        std::cout << "S_IPv6:" << source_address << " ";
-        __u16 *source_port = (__u16*)(packet_header_v4 + (packet_header_v4->ihl * 4));  
-        printf("S_Port:%u ", *source_port);
-        // TODO: log.add_ipv6_connection(string_mac_address, string_ipv6_address)
-    }
-
-    std::cout << "\n";
-    return 0;
+    first_processing = false;
 }
 
 static int cb(struct nflog_g_handle *gh, struct nfgenmsg *nfmsg,
@@ -148,7 +152,7 @@ int main(int argc, char **argv)
     struct nflog_handle *h;
     struct nflog_g_handle *qh;
     struct nflog_g_handle *qh100;
-    int rv, fd;
+    int rv, fd_nflog, fd_shm;
     char buf[4096];
     char *payload;
 
@@ -177,7 +181,7 @@ int main(int argc, char **argv)
     qh = nflog_bind_group(h, 2);
     if (!qh)
     {
-        fprintf(stderr, "no handle for grup 0\n");
+        fprintf(stderr, "no handle for group 2\n");
         exit(1);
     }
 
@@ -188,20 +192,20 @@ int main(int argc, char **argv)
         exit(1);
     }
 
-    fd = nflog_fd(h);
+    fd_nflog = nflog_fd(h);
 
     printf("registering callback for group 2\n");
     nflog_callback_register(qh, &cb, NULL);
 
     // Create shared memory object and set its size
-    fd = shm_open("/myregion", O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
-    if (fd == -1)
+    fd_shm = shm_open("/myregion", O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+    if (fd_shm == -1)
     {
         fprintf(stderr, "can't shm_open /myregion\n");
         exit(1);
     }
 
-    if (ftruncate(fd, sizeof(struct region)) == -1)
+    if (ftruncate(fd_shm, sizeof(struct region)) == -1)
     {
         fprintf(stderr, "can't ftruncate fd\n");
         exit(1);
@@ -209,7 +213,10 @@ int main(int argc, char **argv)
 
     shm = static_cast<struct region *>(mmap(NULL, sizeof(struct region),
                                             PROT_READ | PROT_WRITE, MAP_SHARED,
-                                            fd, 0));
+                                            fd_shm, 0));
+
+    shm = new struct region();
+
     if (shm == MAP_FAILED)
     {
         fprintf(stderr, "can't mmap shm\n");
@@ -218,10 +225,11 @@ int main(int argc, char **argv)
 
     // process packets as they are received
     printf("going into main loop\n");
-    while ((rv = recv(fd, buf, sizeof(buf), 0)) && rv >= 0)
+    while ((rv = recv(fd_nflog, buf, sizeof(buf), 0)) && rv >= 0)
     {
         printf("pkt received (len=%u)\n", rv);
         /* handle messages in just-received packet */
+        first_processing = true;
         nflog_handle_packet(h, buf, rv);
     }
 
