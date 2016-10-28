@@ -1,0 +1,48 @@
+body {
+  background-color:#eee;
+  font-size:200%;
+  padding-bottom: 40px;
+}
+.form-search {
+  max-width: 350px;
+  padding: 15px;
+  margin: 0 auto;
+}
+.form-search .form-search-heading {
+  font-size:60px;
+  margin-top:-10px;
+  text-align:center;
+}
+.form-search input[type=text] {
+    width:100%;
+}
+.form-search button {
+    font-size:150%;
+    max-height:50px;
+    padding:5px;
+}
+.form-search label {
+    font-weight:110%;
+}
+.form-search hr {
+    border: 0;
+    height: 1px;
+    background: #333;
+    background-image: linear-gradient(to right, #ccc, #333, #ccc);
+    margin-bottom:5px;
+    margin-top:-5px;
+}
+.form-search textarea {
+    width:100%;
+    margin-top:5px;
+}
+.form-search a {
+    text-decoration:none;
+}
+.form-search #hourpicker, #minutepicker, #secondpicker {
+    margin-top:10px;
+    width:29.5%;
+}
+div.ui-datepicker{
+ font-size:85%;
+}
