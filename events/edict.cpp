@@ -82,7 +82,7 @@ std::string hexStr_to_charStr(std::string hexStr)
 
 static int print_pkt(struct nflog_data *ldata)
 {
-struct nfulnl_msg_packet_hdr *ph = nflog_get_msg_packet_hdr(ldata);
+    struct nfulnl_msg_packet_hdr *ph = nflog_get_msg_packet_hdr(ldata);
     char *payload;
     nflog_get_payload(ldata, &payload); 
 
@@ -105,7 +105,7 @@ struct nfulnl_msg_packet_hdr *ph = nflog_get_msg_packet_hdr(ldata);
         }
     }
 
-    std::cout << "S_MAC:" << std::hex << mac_address << " ";
+    std::cout << "S_MAC:" << std::hex << mac_address << std::dec << " ";
     printf("V:%u ", packet_header_v4->version);
 
     if (!(device_log.count(mac_address)))
@@ -124,9 +124,8 @@ struct nfulnl_msg_packet_hdr *ph = nflog_get_msg_packet_hdr(ldata);
         inet_ntop(AF_INET, addr, str, INET_ADDRSTRLEN);
         std::cout << "S_IPv4:" << std::setw(15) << std::left << str << " ";
 
-        std::cout << "A:" << packet_header_v4 << " ";
-        std::cout << "O:" << (packet_header_v4 + (packet_header_v4->ihl * 4)) << " ";
-        uint16_t *source_port = (uint16_t*)(packet_header_v4 + (packet_header_v4->ihl * 4));  
+        printf("IHL:%u ", packet_header_v4->ihl);
+        uint16_t *source_port = (uint16_t*)(packet_header_v4 + (packet_header_v4->ihl * 4) + -4);  
         std::cout << "S_Port:" << std::setw(5) << std::left << (*source_port) << " ";
         //std::cout << "S_Port:" << std::setw(5) << std::left << ntohs(*source_port) << " ";
 
