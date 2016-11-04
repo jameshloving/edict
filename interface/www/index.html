@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang='en'>
 <head>
+
   <meta charset='utf-8'>
   <meta http-equiv='X-UA-Compatible' content='IE=edge'>
   <meta name='viewport' content='width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no'>
@@ -10,15 +11,13 @@
   <script src='js/jquery-3.1.1.min.js'></script>
   <script src='js/jquery-ui.min.js'></script>
   <script src='js/jquery-ui-timepicker-addon.js'></script>
+  <script src='js/validator.min.js'></script>
   <script src='js/edict.js'></script>
 
   <link rel='stylesheet' href='css/bootstrap.min.css'>
   <link rel='stylesheet' href='css/jquery-ui.min.css'>
   <link rel='stylesheet' href='css/jquery-ui-timepicker-addon.css'>
   <link rel='stylesheet' href='css/edict.css'>
-
-  <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
-  <link href='../../assets/css/ie10-viewport-bug-workaround.css' rel='stylesheet'>
 
 </head>
 <body>
@@ -32,35 +31,23 @@
       <hr>
 
       <div class='form-group'>
-        <label for='name'>Timestamp:</label>
+        <label class='control-label' for='form-in-timestamp'>Timestamp</label>
         <div>
-          <input type='text' id='datetimepicker' placeholder='Timestamp'>
+          <input id='form-in-timestamp' class='form-control' type='text' name='timestamp' placeholder='Timestamp' tabindex=1>
         </div>
       </div>
 
       <div class='form-group'>
-        <label for='protocol_version'>Protocol Version:</label>
-        <div class='form-search-button'>
-          <input type='radio' name='protocol_version' value='v4' checked>
-          IPv4
-        </div>
-        <div class='form-search-button'>
-          <input type='radio' name='protocol_version' value='v6'>
-          IPv6
-        </div>
+        <label class='control-label' for='form-in-port'>Source Port</label>
+        <input id='form-in-port' class='form-control' type='number' name='source_port' placeholder='0-65535' tabindex=2>
       </div>
 
       <div class='form-group'>
-        <label for='source_port'>Source Port (IPv4 Only):</label>
-        <input type='text' id='source_port' name='source_port' placeholder='(IPv4 only)' />
+        <label class='control-label' for='form-in-address'>Source Address</label>
+        <input id='form-in-address' class='form-control' type='text' name='source_address' placeholder='IPv4 or IPv6' tabindex=3>
       </div>
 
-      <div class='form-group'>
-        <label for='source_port'>Source Address (IPv6 Only):</label>
-        <input type='text' id='source_address' name='source_address' placeholder='(IPv6 only)' />
-      </div>
-
-      <button type='submit' class='btn btn-primary btn-lg btn-block'>Search</button>
+      <button id='form-submit' type='submit' class='btn btn-primary btn-lg btn-block disabled' disabled=true tabindex=4>Search</button>
 
     </form>
 
