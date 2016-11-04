@@ -1,10 +1,11 @@
-var http = require('http');
 var formidable = require('formidable');
 var fs = require('fs');
+var handlebars = require('handlebars');
+var http = require('http');
 var path = require('path');
+var sanitizer = require('sanitizer');
 var url = require('url');
 var util = require('util');
-var handlebars = require('handlebars');
 
 var baseDirectory = __dirname + "/www/";
 var port = 8000;
@@ -58,7 +59,11 @@ var server = http.createServer(function (request, response)
                 var exec = require('child_process').exec;
                 var data;
                 
-                var command = "echo IP version: " + fields.protocol_version;
+                var sanitized_timestamp = sanitizer.escape(fields.timestamp);
+                var sanitized_source_port = sanitizer.escape(fields.source_port);
+                var sanitized_source_address = sanitizer.escape(fields.source_address);
+    
+                var command = "echo Source Address: " + sanitized_source_address;
 
                 function puts(error, stdout, stderr)
                 {
@@ -80,7 +85,10 @@ var server = http.createServer(function (request, response)
                 exec(command, puts);
             });
 
-            form.parse(request);
+            var sanitized_request = request;
+            //var sanitized_request = sanitizer.escape(request);
+
+            form.parse(sanitized_request);
         });
     }
 });
