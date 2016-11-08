@@ -1,3 +1,8 @@
+/*
+    test.cpp (for device_log.cpp)
+    James H. Loving
+*/
+
 #include <iostream>
 #include <string>
 
