@@ -1,7 +1,7 @@
-/**
+/*
   test.cpp (for ip_log.cpp)
-  James Loving
-**/
+  James H. Loving
+*/
 
 #include <unistd.h>   // for sleep()
 
