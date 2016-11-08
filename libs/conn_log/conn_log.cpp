@@ -1,7 +1,7 @@
-/**
+/*
   conn_log.cpp
-  James Loving
-**/
+  James H. Loving
+*/
 
 #include <arpa/inet.h>    // convert IPv6 strings <-> sockaddr_in6
 #include <exception>      // exception handling
