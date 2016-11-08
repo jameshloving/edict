@@ -12,4 +12,5 @@ int main()
     model = "model";
 
     d.add_device(mac, model);
+    d.read_devices();
 }
