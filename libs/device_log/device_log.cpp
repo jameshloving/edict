@@ -39,10 +39,9 @@ public:
         time(&now);
         char time_buf[sizeof("1111-11-11T11:11:11Z")];
         strftime(time_buf, sizeof(time_buf), "%F %TZ", gmtime(&now));
+
         outfile << "\"" << time_buf << "\",";
-
         outfile << "\"" << mac_address << "\",";
-
         outfile << "\"" << make_model << "\",";
 
         outfile << "\n";
