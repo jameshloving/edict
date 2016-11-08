@@ -1,7 +1,7 @@
-/**
+/*
   device_log.cpp
-  James Loving
-**/
+  James H. Loving
+*/
 
 #include <ctime>
 #include <exception>      // exception handling
