@@ -57,7 +57,7 @@ public:
         return macs.count(mac_address);
     }
 
-    std::map<std::string, struct device_log_entry> read_devices()
+    std::map<std::string, struct device_log_entry> get_devices()
     {
         std::map<std::string, struct device_log_entry> devices;
 

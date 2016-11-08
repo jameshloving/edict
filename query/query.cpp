@@ -10,7 +10,8 @@
 #include <unistd.h>
 #include <unordered_map>
 
-#include "../libs/ip_log/ip_log.cpp"
+#include "../libs/conn_log/conn_log.cpp"
+#include "../libs/device_log/device_log.cpp"
 
 struct device_log_entry
 {
@@ -20,7 +21,7 @@ struct device_log_entry
 
 struct region
 {
-    ip_log conn_log;
+    conn_log connections;
 };
 struct region *shm;
 
@@ -55,6 +56,9 @@ int main(int argc, char **argv)
         std::cout << "Invalid timestamp.\n";
         return 0;
     }
+
+    device_log d;
+    std::unordered_map<std::string, struct device_log_entry> = d.get_devices();
 
     // Create shared memory object and set its size
     fd_shm = shm_open("/myregion", O_RDONLY, S_IRUSR | S_IWUSR);
