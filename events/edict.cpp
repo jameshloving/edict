@@ -11,6 +11,7 @@
 #include <unordered_map>
 
 #include "../libs/conn_log/conn_log.cpp"
+#include "../libs/device_log/device_log.cpp"
 
 extern "C"
 {
@@ -42,13 +43,7 @@ struct iphdr_v6
     __u8    next_hdr;
     __u8    hop_limit;
     unsigned char saddr[16];
-    unsigned char daddr[16];    
-};
-
-struct device_log_entry
-{
-    std::string make_model;
-    time_t first_seen;      
+    unsigned char daddr[16];
 };
 
 struct region
@@ -57,7 +52,7 @@ struct region
 };
 struct region *shm;
 
-std::unordered_map<std::string, struct device_log_entry> devices;
+device_log devices;
 
 std::string hexStr_to_charStr(std::string hexStr)
 {
@@ -110,10 +105,8 @@ static int print_pkt(struct nflog_data *ldata)
 
     if (!(devices.count(mac_address)))
     {
-        struct device_log_entry entry;
-        entry.make_model = ""; // TODO: get make_model from wifi code
-        entry.first_seen = time(nullptr);
-        devices.insert(std::pair<std::string, struct device_log_entry>(mac_address, entry));
+        std::string make_model = "make_model"; // TODO: get make_model from wifi code
+        devices.add_device(mac_address, make_model);
         printf("\n*** New Device! ***\n");
     }
 
@@ -122,7 +115,11 @@ static int print_pkt(struct nflog_data *ldata)
         char str[INET_ADDRSTRLEN];
         struct in_addr *addr = (struct in_addr*)&(packet_header_v4->saddr);
         inet_ntop(AF_INET, addr, str, INET_ADDRSTRLEN);
-        std::cout << "S_IPv4:" << std::setw(15) << std::left << str << " ";
+        std::cout << std::setw(15) << std::left << str << " > ";
+
+        addr = (struct in_addr*)&(packet_header_v4->daddr);
+        inet_ntop(AF_INET, addr, str, INET_ADDRSTRLEN);
+        std::cout << std::setw(15) << std::left << str << " ";
 
         printf("IHL:%u ", packet_header_v4->ihl);
         std::cout << "&PH:" << packet_header_v4 << " ";
@@ -130,15 +127,11 @@ static int print_pkt(struct nflog_data *ldata)
         std::cout << "\n  S_Port:";
         for (int i = 0; i < 100; ++i)
         {
-        uint16_t *source_port = (uint16_t*)(packet_header_v4 + (packet_header_v4->ihl * 4) - 30+ i);  
-        std::cout << std::setw(5) << std::left << (*source_port) << ",";
-        //std::cout << "S_Port:" << std::setw(5) << std::left << ntohs(*source_port) << " ";
+            uint16_t *source_port = (uint16_t*)(packet_header_v4 + (packet_header_v4->ihl * 4) - 30+ i);  
+            std::cout << std::setw(5) << std::left << (*source_port) << ",";
+            //std::cout << "S_Port:" << std::setw(5) << std::left << ntohs(*source_port) << " ";
         }
         std::cout << "\n  ";
-
-        addr = (struct in_addr*)&(packet_header_v4->daddr);
-        inet_ntop(AF_INET, addr, str, INET_ADDRSTRLEN);
-        std::cout << "D_IPv4:" << std::setw(15) << std::left << str << " ";
 
         uint16_t *dest_port = (uint16_t*)(packet_header_v4 + (packet_header_v4->ihl * 4) + 2);
         std::cout << "D_Port:" << std::setw(5) << std::left << (*dest_port) << " ";
@@ -148,14 +141,19 @@ static int print_pkt(struct nflog_data *ldata)
     }
     else if (packet_header_v4->version == 6)
     {
-        // TODO fix this entire section
         packet_header_v6 = (struct iphdr_v6*)payload;
-        std::string source_address(packet_header_v6->saddr, packet_header_v6->saddr + sizeof packet_header_v6->saddr / sizeof packet_header_v6->saddr[0]);
-        //printf("S_IPv6:%s ", source_address); // TODO: fix this
-        std::cout << "S_IPv6:" << source_address << " ";
-        __u16 *source_port = (__u16*)(packet_header_v4 + (packet_header_v4->ihl * 4));  
-        printf("S_Port:%u ", *source_port);
-        // TODO: connections.add_ipv6(string_mac_address, string_ipv6_address)
+
+        char str[INET6_ADDRSTRLEN];
+        struct in6_addr *addr = (struct in6_addr*)&(packet_header_v6->saddr);
+        inet_ntop(AF_INET6, addr, str, INET6_ADDRSTRLEN);
+
+        std::cout << str << " > ";
+
+        addr = (struct in6_addr*)&(packet_header_v6->daddr);
+        inet_ntop(AF_INET6, addr, str, INET6_ADDRSTRLEN);
+        std::cout << str << " ";
+
+        // TODO: add_ipv6(mac_address, source_address)
     }
 
     std::cout << "\n";
