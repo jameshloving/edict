@@ -3,6 +3,10 @@
 #include <iomanip>
 #include <iostream>
 #include <netinet/in.h>
+#include <netinet/ip.h>
+#include <netinet/ip6.h>
+#include <netinet/tcp.h>
+#include <netinet/udp.h>
 #include <sstream>
 #include <stdlib.h>
 #include <sys/mman.h>
@@ -17,34 +21,6 @@ extern "C"
 {
     #include <libnetfilter_log/libnetfilter_log.h>
 }
-
-struct iphdr_v4
-{
-    // little Endian (reverse ihl & version if big endian)
-    __u8    ihl:4,
-        version:4;
-    __u8    tos;
-    __u16   tot_len;
-    __u16   id;
-    __u16   frag_off;
-    __u8    ttl;
-    __u8    protocol;
-    __u16   check;
-    __u32   saddr;
-    __u32   daddr;
-};
-
-struct iphdr_v6
-{
-    __u32   version:4,
-        traffic_class:8,
-        flow_label:20;
-    __u16   payload_len;
-    __u8    next_hdr;
-    __u8    hop_limit;
-    unsigned char saddr[16];
-    unsigned char daddr[16];
-};
 
 struct region
 {
@@ -82,8 +58,8 @@ static int print_pkt(struct nflog_data *ldata)
     nflog_get_payload(ldata, &payload); 
 
     struct nfulnl_msg_packet_hw *packet_hw = nflog_get_packet_hw(ldata);
-    struct iphdr_v4 *packet_header_v4 = (struct iphdr_v4*)payload;
-    struct iphdr_v6 *packet_header_v6;
+
+    struct iphdr *packet_header_v4 = (struct iphdr*) payload;
 
     //std::cout << "Time:" << time(nullptr) << " ";
 
@@ -124,32 +100,30 @@ static int print_pkt(struct nflog_data *ldata)
         printf("IHL:%u ", packet_header_v4->ihl);
         std::cout << "&PH:" << packet_header_v4 << " ";
 
-        std::cout << "\n  S_Port:";
-        for (int i = 0; i < 100; ++i)
-        {
-            uint16_t *source_port = (uint16_t*)(packet_header_v4 + (packet_header_v4->ihl * 4) - 30+ i);  
-            std::cout << std::setw(5) << std::left << (*source_port) << ",";
-            //std::cout << "S_Port:" << std::setw(5) << std::left << ntohs(*source_port) << " ";
-        }
-        std::cout << "\n  ";
+        int off_tl = packet_header_v4->ihl << 2;
+        char *tl = (char *) packet_header_v4 + off_tl;
+        
+        struct tcphdr *tcphdr = (struct tcphdr*) tl;
 
-        uint16_t *dest_port = (uint16_t*)(packet_header_v4 + (packet_header_v4->ihl * 4) + 2);
-        std::cout << "D_Port:" << std::setw(5) << std::left << (*dest_port) << " ";
+        std::cout << "\n  S_Port:";
+        std::cout << std::setw(5) << std::left << ntohs(tcphdr->th_sport) << ",";
+        std::cout << "\n  ";
+        std::cout << "D_Port:" << std::setw(5) << std::left << ntohs(tcphdr->th_dport) << " ";
         //std::cout << "D_Port:" << std::setw(5) << std::left << ntohs(*dest_port) << " ";
 
         //shm->connections.add_ipv4(mac_address, *source_port);
     }
     else if (packet_header_v4->version == 6)
     {
-        packet_header_v6 = (struct iphdr_v6*)payload;
+        struct ip6_hdr *packet_header_v6 = (struct ip6_hdr*) payload;
 
         char str[INET6_ADDRSTRLEN];
-        struct in6_addr *addr = (struct in6_addr*)&(packet_header_v6->saddr);
+        struct in6_addr *addr = &packet_header_v6->ip6_src;
         inet_ntop(AF_INET6, addr, str, INET6_ADDRSTRLEN);
 
         std::cout << str << " > ";
 
-        addr = (struct in6_addr*)&(packet_header_v6->daddr);
+        addr = (struct in6_addr*)&(packet_header_v6->ip6_dst);
         inet_ntop(AF_INET6, addr, str, INET6_ADDRSTRLEN);
         std::cout << str << " ";
 
