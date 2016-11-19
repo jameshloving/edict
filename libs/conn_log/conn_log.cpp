@@ -5,6 +5,7 @@
 
 #include <arpa/inet.h>    // convert IPv6 strings <-> sockaddr_in6
 #include <cstring>
+#include <cstdlib>
 #include <exception>      // exception handling
 #include <iostream>       // output
 #include <memory>         // unique_ptr
@@ -18,14 +19,15 @@
 #include <stdint.h>       // int vars of atypical size (16b, 32b)
 #include <time.h>         // time(), etc.
 #include <unistd.h>
+#include <vector>
 
 #include "tcp_client.cpp"
 #include "../bloom/bloom_filter.hpp"   // Bloom filter, by Arash Partow
 
-const int SUBLOG_LENGTH = 3600;            // sublog length in seconds
-const int SUBLOG_FUZZINESS = 10;           // number of seconds of fuzziness in checking sublogs
-const int DEFAULT_COUNT = 2000000;         // default max capacity for Bloom filter
-const float DEFAULT_PROBABILITY = 0.001;   // default probability for Bloom filter false positive
+const unsigned int SUBLOG_LENGTH = 3600;            // sublog length in seconds
+const unsigned int SUBLOG_FUZZINESS = 10;           // number of seconds of fuzziness in checking sublogs
+const int MAX_LOG_SIZE = 102400000;                 // maximum size of logs to store (in bytes)
+const unsigned int PRUNE_CHECK_FREQ = 10000;        // check for oversized logs every 1/FREQ connections
 
 class conn_log
 {
@@ -45,6 +47,60 @@ class conn_log
             std::regex pattern("(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}\%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))");
             return true;
             return std::regex_match(ipv6, pattern);
+        }
+
+        unsigned int get_filter_size()
+        {
+            unsigned int sum = 0;
+
+            c.send_data("list\n");
+            std::string reply = c.receive(4096);
+
+            if (reply.substr(0, 5) != "START")
+            {
+                // error    
+                throw std::runtime_error("prune_filters() received invalid info from bloomd");
+            }
+            
+            std::vector<char> reply_v(reply.begin(), reply.end());
+            reply_v.push_back('\0');
+            for (const char *line = strtok(&reply_v[0], "\n"); line; line = strtok(NULL, "\n")) 
+            {
+                std::string s = std::string(line);
+                if (s.substr(0,5) != "START" && s.substr(0,3) != "END")
+                {
+                    c.send_data("info " + s.substr(0, s.find_first_of(' ')) + "\n");
+                    std::string info = c.receive(2048);
+                    unsigned int filter = atoi(info.substr(info.find("storage ")+8, info.length()).c_str());
+                    sum += filter;
+                }
+            }
+
+            return sum;
+        }
+
+        void prune_filters()
+        {
+            //for (int i = 0; get_filter_size() > MAX_LOG_SIZE; ++i)
+            while (get_filter_size() > MAX_LOG_SIZE)
+            {
+                // drop the oldest filter
+                c.send_data("list\n");
+                std::string reply = c.receive(4096);
+
+                if (reply.substr(0, 5) != "START")
+                {
+                    // error    
+                    throw std::runtime_error("prune_filters() received invalid info from bloomd");
+                }
+                
+                std::string victim = reply.substr(6, reply.find_first_of('0'));
+                victim = victim.substr(0, victim.length() - 1);
+
+                c.send_data("drop " + victim + "\n");
+                reply = c.receive(1024);
+                std::cout << "size=" << get_filter_size() << "\n";
+            }
         }
 
     public:
@@ -74,6 +130,13 @@ class conn_log
                         + mac_address);
             }
 
+            // check for oversized conn_log and prune old filters every 10k connections
+            static int i = 0;
+            if (i++ % PRUNE_CHECK_FREQ == 0)
+            {
+                prune_filters();
+            }
+
             // create timestamp
             time_t timestamp = time(nullptr);
             
@@ -91,7 +154,7 @@ class conn_log
 
         bool has_ipv4(std::string mac_address,
                       uint16_t port,
-                      time_t timestamp) const
+                      time_t timestamp)
         {
             if (!valid_mac(mac_address))
             {
@@ -99,13 +162,16 @@ class conn_log
                         + mac_address);
             }
 
-            // list(timestamp / SUBLOG_LENGTH)
-            // if "Filter does not exist"
-            // then return false
-            // throw std::out_of_range("Invalid timestamp - no ipv4 log covering the timestamp's period");
+            c.send_data("check " + std::to_string(timestamp / SUBLOG_LENGTH) + " "
+                        + mac_address + "|" + std::to_string(port) + "\n");
+            std::string reply = c.receive(1024);
+            
+            if (reply.substr(0,4) == "Yes")
+            {
+                return true;
+            }
 
-            // check string(timestamp / SUBLOG_LENGTH) string(mac_address + port)
-            return true;
+            return false;
         }
 /*
         void add_ipv6(std::string mac_address,
