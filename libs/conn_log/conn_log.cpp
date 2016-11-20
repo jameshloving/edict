@@ -3,26 +3,14 @@
     James H. Loving
 */
 
-#include <arpa/inet.h>    // convert IPv6 strings <-> sockaddr_in6
-#include <cstring>
-#include <cstdlib>
 #include <exception>      // exception handling
 #include <iostream>       // output
-#include <memory>         // unique_ptr
-#include <netdb.h>
-#include <netinet/in.h>   // sockaddr_in6 IPv6 struct
-#include <queue>          // basis for log-of-sublogs
 #include <regex>          // for MAC and IP address validation
-#include <sys/socket.h>   // for network sockets
-#include <sys/types.h>
 #include <string>         // string class
 #include <stdint.h>       // int vars of atypical size (16b, 32b)
 #include <time.h>         // time(), etc.
-#include <unistd.h>
-#include <vector>
 
 #include "tcp_client.cpp"
-#include "../bloom/bloom_filter.hpp"   // Bloom filter, by Arash Partow
 
 const unsigned int FILTER_LENGTH = 3600;         // sublog length in seconds
 const unsigned int FUZZINESS = 10;               // number of seconds of fuzziness in checking filter
