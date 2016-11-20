@@ -35,11 +35,11 @@ class conn_log
         tcp_client c;
 
         // TODO: fix these functions
-        bool valid_mac(std::string mac) const
-        bool valid_ipv6(std::string ipv6) const
+        bool valid_mac(std::string mac) const;
+        bool valid_ipv6(std::string ipv6) const;
 
         unsigned int get_filter_size();
-        void prune_filters()
+        void prune_filters();
 
     public:
         conn_log();
