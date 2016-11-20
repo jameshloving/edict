@@ -24,9 +24,9 @@
 #include "tcp_client.cpp"
 #include "../bloom/bloom_filter.hpp"   // Bloom filter, by Arash Partow
 
-const unsigned int SUBLOG_LENGTH = 3600;            // sublog length in seconds
+const unsigned int FILTER_LENGTH = 3600;            // sublog length in seconds
 const unsigned int SUBLOG_FUZZINESS = 10;           // number of seconds of fuzziness in checking sublogs
-const int MAX_LOG_SIZE = 102400000;                 // maximum size of logs to store (in bytes)
+const int MAX_FILTER_SIZE = 102400000;                 // maximum size of logs to store (in bytes)
 const unsigned int PRUNE_CHECK_FREQ = 10000;        // check for oversized logs every 1/FREQ connections
 
 class conn_log
@@ -81,8 +81,8 @@ class conn_log
 
         void prune_filters()
         {
-            //for (int i = 0; get_filter_size() > MAX_LOG_SIZE; ++i)
-            while (get_filter_size() > MAX_LOG_SIZE)
+            //for (int i = 0; get_filter_size() > MAX_FILTER_SIZE; ++i)
+            while (get_filter_size() > MAX_FILTER_SIZE)
             {
                 // drop the oldest filter
                 c.send_data("list\n");
@@ -141,12 +141,12 @@ class conn_log
             time_t timestamp = time(nullptr);
             
             // check and create filter based on current timeslot
-            c.send_data("create " + std::to_string(timestamp / SUBLOG_LENGTH) + "\n");
+            c.send_data("create " + std::to_string(timestamp / FILTER_LENGTH) + "\n");
             std::string reply = c.receive(1024);
             std::cout << reply;
 
-            // set string(timestamp / SUBLOG_LENGTH) string(mac_address + port) 
-            c.send_data("set " + std::to_string(timestamp / SUBLOG_LENGTH) + " "
+            // set string(timestamp / FILTER_LENGTH) string(mac_address + port) 
+            c.send_data("set " + std::to_string(timestamp / FILTER_LENGTH) + " "
                         + mac_address + "|" + std::to_string(port) + "\n");
             reply = c.receive(1024);
             std::cout << reply;
@@ -162,13 +162,41 @@ class conn_log
                         + mac_address);
             }
 
-            c.send_data("check " + std::to_string(timestamp / SUBLOG_LENGTH) + " "
+            c.send_data("check " + std::to_string(timestamp / FILTER_LENGTH) + " "
                         + mac_address + "|" + std::to_string(port) + "\n");
             std::string reply = c.receive(1024);
             
             if (reply.substr(0,4) == "Yes")
             {
                 return true;
+            }
+
+            // fuzzy check at start of filter
+            time_t filter_start = (timestamp / FILTER_LENGTH) * FILTER_LENGTH;
+            if (timestamp - filter_start < 60)
+            {
+                c.send_data("check " + std::to_string((timestamp / FILTER_LENGTH) - 1) + " "
+                            + mac_address + "|" + std::to_string(port) + "\n");
+                std::string reply = c.receive(1024);
+                
+                if (reply.substr(0,4) == "Yes")
+                {
+                    return true;
+                }
+            }
+            
+            // fuzzy check at end of filter
+            time_t filter_end = ((timestamp / FILTER_LENGTH) + 1) * FILTER_LENGTH
+            if (filter_end - timestamp) < 60)
+            {
+                c.send_data("check " + std::to_string((timestamp / FILTER_LENGTH) + 1) + " "
+                            + mac_address + "|" + std::to_string(port) + "\n");
+                std::string reply = c.receive(1024);
+                
+                if (reply.substr(0,4) == "Yes")
+                {
+                    return true;
+                }
             }
 
             return false;
@@ -231,7 +259,7 @@ class conn_log
             {
                 // compare timestamp and creation times to get correct log
                 if (timestamp >= it->get_creation_time() &&
-                        timestamp - it->get_creation_time() < SUBLOG_LENGTH)
+                        timestamp - it->get_creation_time() < FILTER_LENGTH)
                 {
                     // fuzzy-check for MAC+address combination in log (and potentially neighbors)
                     // if timestamp is in first 10sec of sublog period, check previous sublog AND current sublog
@@ -239,7 +267,7 @@ class conn_log
                         return (it->has_ipv6(mac_address, ipv6_address) || (it-1)->has_ipv6(mac_address, ipv6_address));
                     }
                     // if timestamp is in last 10sec of sublog period, check next sublog AND current sublog
-                    else if (timestamp - it->get_creation_time() > SUBLOG_LENGTH - SUBLOG_FUZZINESS) {
+                    else if (timestamp - it->get_creation_time() > FILTER_LENGTH - SUBLOG_FUZZINESS) {
                         return (it->has_ipv6(mac_address, ipv6_address) || (it+1)->has_ipv6(mac_address, ipv6_address));
                     }
                     // timestamp is solidly in current sublog, so only check current sublog
