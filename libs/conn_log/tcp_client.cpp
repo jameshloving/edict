@@ -14,17 +14,17 @@
 
 class tcp_client
 {
-private:
-    int sock;
-    std::string address;
-    int port;
-    struct sockaddr_in server;
-     
-public:
-    tcp_client();
-    bool conn(std::string, int);
-    bool send_data(std::string data);
-    std::string receive(int);
+    private:
+        int sock;
+        std::string address;
+        int port;
+        struct sockaddr_in server;
+         
+    public:
+        tcp_client();
+        bool conn(std::string, int);
+        bool send_data(std::string data);
+        std::string receive(int);
 };
  
 tcp_client::tcp_client()
