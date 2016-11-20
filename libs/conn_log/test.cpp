@@ -6,7 +6,6 @@
 #include <iostream>
 #include <string>
 #include <time.h>
-#include <unistd.h>   // for sleep()
 
 #include "conn_log.cpp"
 
