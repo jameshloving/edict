@@ -22,11 +22,7 @@ extern "C"
     #include <libnetfilter_log/libnetfilter_log.h>
 }
 
-struct region
-{
-    conn_log connections;
-};
-struct region *shm;
+conn_log connections;
 
 device_log devices;
 
@@ -109,9 +105,8 @@ static int print_pkt(struct nflog_data *ldata)
         std::cout << std::setw(5) << std::left << ntohs(tcphdr->th_sport) << ",";
         std::cout << "\n  ";
         std::cout << "D_Port:" << std::setw(5) << std::left << ntohs(tcphdr->th_dport) << " ";
-        //std::cout << "D_Port:" << std::setw(5) << std::left << ntohs(*dest_port) << " ";
 
-        //shm->connections.add_ipv4(mac_address, *source_port);
+        connections.add_ipv4(mac_address, ntohs(tcphdr->th_sport));
     }
     else if (packet_header_v4->version == 6)
     {
@@ -146,7 +141,7 @@ int main(int argc, char **argv)
     struct nflog_handle *h;
     struct nflog_g_handle *qh;
     struct nflog_g_handle *qh100;
-    int rv, fd_nflog, fd_shm;
+    int rv, fd_nflog;
     char buf[4096];
     char *payload;
 
@@ -190,32 +185,6 @@ int main(int argc, char **argv)
 
     printf("registering callback for group 2\n");
     nflog_callback_register(qh, &cb, NULL);
-
-    // Create shared memory object and set its size
-    fd_shm = shm_open("/myregion", O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
-    if (fd_shm == -1)
-    {
-        fprintf(stderr, "can't shm_open /myregion\n");
-        exit(1);
-    }
-
-    if (ftruncate(fd_shm, sizeof(struct region)) == -1)
-    {
-        fprintf(stderr, "can't ftruncate fd\n");
-        exit(1);
-    }
-
-    shm = static_cast<struct region *>(mmap(NULL, sizeof(struct region),
-                                            PROT_READ | PROT_WRITE, MAP_SHARED,
-                                            fd_shm, 0));
-
-    shm = new struct region();
-
-    if (shm == MAP_FAILED)
-    {
-        fprintf(stderr, "can't mmap shm\n");
-        exit(1);
-    }
 
     // process packets as they are received
     printf("going into main loop\n");
