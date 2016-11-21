@@ -58,6 +58,8 @@ void device_log::add_device(std::string mac_address,
     outfile << "\"" << mac_address << "\",";
     outfile << "\"" << make_model << "\",";
 
+    std::cout << "device_log.add_device(" << time_buf << "," << mac_address << "," << make_model << ")\n";
+
     outfile << "\n";
     outfile.close();
 }
