@@ -33,6 +33,7 @@ body {
     margin-top:-5px;
 }
 .form-search textarea {
+    height:300px;
     width:100%;
     margin-top:5px;
 }

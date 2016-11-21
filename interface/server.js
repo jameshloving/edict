@@ -63,12 +63,16 @@ var server = http.createServer(function (request, response)
                 var sanitized_source_port = sanitizer.escape(fields.source_port);
                 var sanitized_source_address = sanitizer.escape(fields.source_address);
     
-                var command = "echo Source Address: " + sanitized_source_address;
+                sanitized_timestamp = sanitized_timestamp.replace(' ', 'T');
+
+                var command = "../query/query " + sanitized_timestamp + " v4 " + sanitized_source_port;
 
                 function puts(error, stdout, stderr)
                 {
+                    
+
                     var data = {
-                        device: stdout,
+                        device: stdout.split('START')[1].split('END')[0],
                     };
 
                     var template = handlebars.compile(source);
@@ -79,7 +83,7 @@ var server = http.createServer(function (request, response)
                     response.end();
 
                     console.log('Reply:')
-                    console.log(stdout);
+                    console.log(stdout.split('START')[1].split('END')[0]);
                 }
 
                 exec(command, puts);
