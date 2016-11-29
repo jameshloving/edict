@@ -52,7 +52,7 @@ void device_log::add_device(std::string mac_address,
     time_t now;
     time(&now);
     char time_buf[sizeof("1111-11-11T11:11:11Z")];
-    strftime(time_buf, sizeof(time_buf), "%F %TZ", gmtime(&now));
+    strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%SZ", gmtime(&now));
 
     outfile << "\"" << time_buf << "\",";
     outfile << "\"" << mac_address << "\",";
