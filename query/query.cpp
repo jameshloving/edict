@@ -24,7 +24,7 @@ std::map<std::string, struct device_log_entry> check_ipv4(time_t timestamp, uint
     {
         // potential mismatch between MAC formats between device log and conn log
         // appearance: device log stores w/out colons, conn log stores w/
-        std::string mac = (it->first).substr(1, (it->first).length()-2);
+        std::string mac = it->first;
         
         if (connections.has_ipv4(mac, source_port, timestamp))
         {
@@ -44,8 +44,14 @@ int main(int argc, char **argv)
 {
 	if (argc != 4)
 	{
-		std::cout << "Usage: " << argv[0] << " <timestamp> <\"v4\" or \"v6\"> <source port OR IPv6 source address>\n";
-        std::cout << "Current timestamp: " << std::to_string(time(nullptr)) << "\n";
+		std::cout << "Usage: " << argv[0] << " <UTC timestamp> <\"v4\" or \"v6\"> <source port OR IPv6 source address>\n";
+
+        time_t now;
+        time(&now);
+        char time_buf[sizeof("1111-11-11T11:11:11Z")];
+        strftime(time_buf, sizeof(time_buf), "%Y-%m-%dT%H:%M:%SZ", gmtime(&now)); 
+        std::cout << "Current UTC time: " << time_buf << "\n";
+
 		return 0;
 	}
 
@@ -53,13 +59,10 @@ int main(int argc, char **argv)
     int fd_shm;
 
 	// TODO: validate timestamp
-    struct tm t;
-    if (strptime(argv[1], "%Y-%m-%dT%H:%M:%S%z", &t) != NULL)
+    struct tm t{};
+    if (strptime(argv[1], "%Y-%m-%dT%H:%M:%SZ", &t) != NULL)
     {
-        timestamp = mktime(&t);
-        timestamp += 3600;
-        if ((&t)->tm_isdst)
-            timestamp -= 3600;
+        timestamp = mktime(&t) + (&t)->tm_gmtoff;
     }	
     else
     {
@@ -85,10 +88,12 @@ int main(int argc, char **argv)
             {
                 for (std::map<std::string, struct device_log_entry>::iterator it=results.begin(); it != results.end(); ++it)
                 {
+                    char time_buf[sizeof("1111-11-11T11:11:11Z")];
+                    strftime(time_buf, sizeof(time_buf), "%Y-%m-%dT%H:%M:%SZ", gmtime(&it->second.first_seen));
                     std::cout << "Match:"
                               << "\n  Make & model: " << it->second.make_model
                               << "\n  MAC address: " << it->first
-                              << "\n  First seen: " << it->second.first_seen
+                              << "\n  First seen: " << time_buf
                               << "\n";
                 }
             }

@@ -52,16 +52,15 @@ void device_log::add_device(std::string mac_address,
     time_t now;
     time(&now);
     char time_buf[sizeof("1111-11-11T11:11:11Z")];
-    strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%SZ", gmtime(&now));
+    strftime(time_buf, sizeof(time_buf), "%Y-%m-%dT%H:%M:%SZ", gmtime(&now));
 
-    outfile << "\"" << time_buf << "\",";
-    outfile << "\"" << mac_address << "\",";
-    outfile << "\"" << make_model << "\",";
+    outfile << time_buf << ",";
+    outfile << mac_address << ",";
+    outfile << make_model << "\n";
+
+    outfile.close();
 
     std::cout << "device_log.add_device(" << time_buf << "," << mac_address << "," << make_model << ")\n";
-
-    outfile << "\n";
-    outfile.close();
 }
 
 unsigned int device_log::count(std::string mac_address)
@@ -90,13 +89,14 @@ std::map<std::string, struct device_log_entry> device_log::get_devices()
         
         entry.make_model = make_model;
 
-        struct tm t;
-        strptime(timestamp.c_str(), "%Y-%m-%d %H:%M:%S", &t);
-        entry.first_seen = mktime(&t);
+        struct tm t{};
+        if (strptime(timestamp.c_str(), "%Y-%m-%dT%H:%M:%SZ", &t) != NULL)
+        {
+            entry.first_seen = mktime(&t) + (&t)->tm_gmtoff;
+        }
 
         devices.insert(std::pair<std::string, struct device_log_entry>(mac_address, entry));
     }
 
     return devices;
 }
-

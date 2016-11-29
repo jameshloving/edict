@@ -148,13 +148,11 @@ void conn_log::add_ipv4(std::string mac_address,
     // check and create filter based on current timeslot
     c.send_data("create " + std::to_string(timestamp / FILTER_LENGTH) + "\n");
     std::string reply = c.receive(1024);
-    std::cout << reply;
 
     // set string(timestamp / FILTER_LENGTH) string(mac_address + port) 
     c.send_data("set " + std::to_string(timestamp / FILTER_LENGTH) + " "
                 + mac_address + "|" + std::to_string(port) + "\n");
     reply = c.receive(1024);
-    std::cout << reply;
 
     std::cout << "conn_log.add_ipv4(" << timestamp << "," << mac_address << "," << port << ")\n";
 }
@@ -169,8 +167,7 @@ bool conn_log::has_ipv4(std::string mac_address,
                 + mac_address);
     }
 
-    bool invalid_timestamp = false;
-
+    // check 'correct' filter
     c.send_data("check " + std::to_string(timestamp / FILTER_LENGTH) + " "
                 + mac_address + "|" + std::to_string(port) + "\n");
     std::string reply = c.receive(1024);
@@ -266,6 +263,7 @@ bool conn_log::has_ipv6(std::string mac_address,
                 + ipv6_address);
     }
 
+    // check 'correct' filter
     c.send_data("check " + std::to_string(timestamp / FILTER_LENGTH) + " "
                 + mac_address + "|" + ipv6_address + "\n");
     std::string reply = c.receive(1024);
