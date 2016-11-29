@@ -8,26 +8,31 @@
 #include <sys/mman.h>
 #include <time.h>
 #include <unistd.h>
-#include <unordered_map>
 
 #include "../libs/conn_log/conn_log.cpp"
 #include "../libs/device_log/device_log.cpp"
 
-struct device_log_entry
-{
-	std::string make_model;
-	time_t first_seen;		
-};
+conn_log connections;
+device_log d;
+std::map<std::string, struct device_log_entry> devices = d.get_devices();
 
-struct region
+std::map<std::string, struct device_log_entry> check_ipv4(time_t timestamp, uint16_t source_port)
 {
-    conn_log connections;
-};
-struct region *shm;
+    std::map<std::string, struct device_log_entry> has_ipv4;
+    
+    for (std::map<std::string, struct device_log_entry>::iterator it=devices.begin(); it != devices.end(); ++it)
+    {
+        // potential mismatch between MAC formats between device log and conn log
+        // appearance: device log stores w/out colons, conn log stores w/
+        std::string mac = (it->first).substr(1, (it->first).length()-2);
+        
+        if (connections.has_ipv4(mac, source_port, timestamp))
+        {
+            has_ipv4.insert(std::pair<std::string, struct device_log_entry>(mac, devices[mac]));
+        }
+    } 
 
-bool check_ipv4(time_t timestamp, uint16_t source_port)
-{
-    return true;
+    return has_ipv4;
 }
 
 bool check_ipv6(time_t timestamp, std::string source_ipv6)
@@ -40,6 +45,7 @@ int main(int argc, char **argv)
 	if (argc != 4)
 	{
 		std::cout << "Usage: " << argv[0] << " <timestamp> <\"v4\" or \"v6\"> <source port OR IPv6 source address>\n";
+        std::cout << "Current timestamp: " << std::to_string(time(nullptr)) << "\n";
 		return 0;
 	}
 
@@ -47,9 +53,13 @@ int main(int argc, char **argv)
     int fd_shm;
 
 	// TODO: validate timestamp
-    if (true)
+    struct tm t;
+    if (strptime(argv[1], "%Y-%m-%dT%H:%M:%S%z", &t) != NULL)
     {
-        timestamp = static_cast<time_t>(atoi(argv[1]));
+        timestamp = mktime(&t);
+        timestamp += 3600;
+        if ((&t)->tm_isdst)
+            timestamp -= 3600;
     }	
     else
     {
@@ -57,43 +67,31 @@ int main(int argc, char **argv)
         return 0;
     }
 
-    device_log d;
-    std::unordered_map<std::string, struct device_log_entry> = d.get_devices();
+    std::cout << "checking time: " << timestamp << "\n";
 
-    // Create shared memory object and set its size
-    fd_shm = shm_open("/myregion", O_RDONLY, S_IRUSR | S_IWUSR);
-    if (fd_shm == -1)
-    {
-        std::cerr << "can't shm_open /myregion: " << errno << "\n";
-        exit(1);
-    }
-
-    /*
-    if (ftruncate(fd_shm, sizeof(struct region)) == -1)
-    {
-        std::cerr << "can't ftruncate fd_shm: " << errno << "\n";
-        exit(1);
-    }
-    */
-
-    shm = static_cast<struct region *>(mmap(NULL, sizeof(struct region),
-                                            PROT_READ, MAP_SHARED,
-                                            fd_shm, 0));
-
-    shm = new struct region();
-
-    if (shm == MAP_FAILED)
-    {
-        fprintf(stderr, "can't mmap shm\n");
-        exit(1);
-    }
+    std::cout << "START\n";
 
     if (strcmp(argv[2], "v4") == 0)
     {
         if (true) // TODO: validate IPv4 source port
         {
             uint16_t source_port = static_cast<uint16_t>(atoi(argv[3]));
-            std::cout << check_ipv4(timestamp, source_port) << "\n";
+            std::map<std::string, struct device_log_entry> results = check_ipv4(timestamp, source_port);
+            if (results.empty())
+            {
+                std::cout << "No match.\n";
+            }
+            else
+            {
+                for (std::map<std::string, struct device_log_entry>::iterator it=results.begin(); it != results.end(); ++it)
+                {
+                    std::cout << "Match:"
+                              << "\n  Make & model: " << it->second.make_model
+                              << "\n  MAC address: " << it->first
+                              << "\n  First seen: " << it->second.first_seen
+                              << "\n";
+                }
+            }
         }
         else
         {
@@ -119,6 +117,8 @@ int main(int argc, char **argv)
         std::cout << "Invalid protocol.\n";
 		return 0;
     }
+
+    std::cout << "END\n";
 
 	return 0;
 }
