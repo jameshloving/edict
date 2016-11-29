@@ -47,6 +47,22 @@ std::string hexStr_to_charStr(std::string hexStr)
     return charStr;
 }
 
+void pprint_packet(std::string mac_address,
+                  std::string source_address,
+                  std::string dest_address,
+                  uint16_t source_port,
+                  uint16_t dest_port)
+{
+    std::cout << mac_address << "\n"
+              << "Source: "
+              << std::setw(8) << std::left << source_port
+              << std::setw(80) << std::left << source_address
+              << "\nDest:   "
+              << std::setw(8) << std::left << dest_port
+              << std::setw(80) << std::left << dest_address
+              << "\n";
+}
+
 static int print_pkt(struct nflog_data *ldata)
 {
     struct nfulnl_msg_packet_hdr *ph = nflog_get_msg_packet_hdr(ldata);
@@ -56,8 +72,6 @@ static int print_pkt(struct nflog_data *ldata)
     struct nfulnl_msg_packet_hw *packet_hw = nflog_get_packet_hw(ldata);
 
     struct iphdr *packet_header_v4 = (struct iphdr*) payload;
-
-    //std::cout << "Time:" << time(nullptr) << " ";
 
     std::string mac_address = "";
 
@@ -72,9 +86,7 @@ static int print_pkt(struct nflog_data *ldata)
         }
     }
 
-    std::cout << "S_MAC:" << std::hex << mac_address << std::dec << " ";
-    printf("V:%u ", packet_header_v4->version);
-
+    // if the device is new, add it to device_log
     if (!(devices.count(mac_address)))
     {
         std::string make_model = "make_model"; // TODO: get make_model from wifi code
@@ -82,32 +94,35 @@ static int print_pkt(struct nflog_data *ldata)
         printf("\n*** New Device! ***\n");
     }
 
+    // process IPv4 packets
     if (packet_header_v4->version == 4)
     {
+        std::string source_address, dest_address;
+        uint16_t source_port, dest_port;
+
         char str[INET_ADDRSTRLEN];
         struct in_addr *addr = (struct in_addr*)&(packet_header_v4->saddr);
         inet_ntop(AF_INET, addr, str, INET_ADDRSTRLEN);
-        std::cout << std::setw(15) << std::left << str << " > ";
+        source_address = str;
 
         addr = (struct in_addr*)&(packet_header_v4->daddr);
         inet_ntop(AF_INET, addr, str, INET_ADDRSTRLEN);
-        std::cout << std::setw(15) << std::left << str << " ";
-
-        printf("IHL:%u ", packet_header_v4->ihl);
-        std::cout << "&PH:" << packet_header_v4 << " ";
+        dest_address = str;
 
         int off_tl = packet_header_v4->ihl << 2;
         char *tl = (char *) packet_header_v4 + off_tl;
         
         struct tcphdr *tcphdr = (struct tcphdr*) tl;
 
-        std::cout << "\n  S_Port:";
-        std::cout << std::setw(5) << std::left << ntohs(tcphdr->th_sport) << ",";
-        std::cout << "\n  ";
-        std::cout << "D_Port:" << std::setw(5) << std::left << ntohs(tcphdr->th_dport) << " ";
+        source_port = ntohs(tcphdr->th_sport);
+        dest_port = ntohs(tcphdr->th_dport);
+
+        pprint_packet(mac_address, source_address, dest_address, source_port, dest_port);
 
         connections.add_ipv4(mac_address, ntohs(tcphdr->th_sport));
     }
+
+    // process IPv6 packets
     else if (packet_header_v4->version == 6)
     {
         struct ip6_hdr *packet_header_v6 = (struct ip6_hdr*) payload;
