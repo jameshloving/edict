@@ -2,6 +2,7 @@ var formidable = require('formidable');
 var fs = require('fs');
 var handlebars = require('handlebars');
 var http = require('http');
+var moment = require('moment-timezone');
 var path = require('path');
 var sanitizer = require('sanitizer');
 var url = require('url');
@@ -64,13 +65,12 @@ var server = http.createServer(function (request, response)
                 var sanitized_source_address = sanitizer.escape(fields.source_address);
     
                 sanitized_timestamp = sanitized_timestamp.replace(' ', 'T');
+                var utc_timestamp = moment.tz(sanitized_timestamp, 'UTC').format().substr(0,19) + "Z";
 
-                var command = "../query/query " + sanitized_timestamp + " v4 " + sanitized_source_port;
+                var command = "../query/query " + utc_timestamp + " v4 " + sanitized_source_port;
 
                 function puts(error, stdout, stderr)
                 {
-                    
-
                     var data = {
                         device: stdout.split('START')[1].split('END')[0],
                     };
