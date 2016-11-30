@@ -34,11 +34,13 @@ class device_log
 
         unsigned int count(std::string mac_address);
 
+        std::unordered_set<std::string> get_macs();
         std::map<std::string, struct device_log_entry> get_devices();
 };
 
 device_log::device_log()
 {
+    macs = get_macs();
 }
 
 void device_log::add_device(std::string mac_address,
@@ -66,6 +68,29 @@ void device_log::add_device(std::string mac_address,
 unsigned int device_log::count(std::string mac_address)
 {
     return macs.count(mac_address);
+}
+
+std::unordered_set<std::string> device_log::get_macs()
+{
+    std::unordered_set<std::string> macs;
+
+    std::ifstream infile;
+    infile.open(DEVICE_LOG_FILE, std::ios::in);
+
+    std::string line;
+    while(std::getline(infile,line))
+    {
+        std::stringstream lineStream(line);
+        std::string timestamp, mac_address, make_model;
+
+        std::getline(lineStream, timestamp, ',');
+        std::getline(lineStream, mac_address, ',');
+        std::getline(lineStream, make_model, ',');
+
+        macs.insert(mac_address);
+    }    
+
+    return macs;
 }
 
 std::map<std::string, struct device_log_entry> device_log::get_devices()
