@@ -72,7 +72,7 @@ unsigned int device_log::count(std::string mac_address)
 
 std::unordered_set<std::string> device_log::get_macs()
 {
-    std::unordered_set<std::string> macs;
+    std::unordered_set<std::string> mac_addresses;
 
     std::ifstream infile;
     infile.open(DEVICE_LOG_FILE, std::ios::in);
@@ -87,10 +87,10 @@ std::unordered_set<std::string> device_log::get_macs()
         std::getline(lineStream, mac_address, ',');
         std::getline(lineStream, make_model, ',');
 
-        macs.insert(mac_address);
+        mac_addresses.insert(mac_address);
     }    
 
-    return macs;
+    return mac_addresses;
 }
 
 std::map<std::string, struct device_log_entry> device_log::get_devices()
