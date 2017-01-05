@@ -64,11 +64,14 @@ var server = http.createServer(function (request, response)
                 var sanitized_source_port = sanitizer.escape(fields.source_port);
                 var sanitized_source_address = sanitizer.escape(fields.source_address);
     
+                /**
                 sanitized_timestamp = sanitized_timestamp.replace(' ', 'T');
+                **/
                 var utc_timestamp = moment.tz(sanitized_timestamp, 'UTC').format().substr(0,19) + "Z";
 
                 var command = "../query/query " + utc_timestamp + " v4 " + sanitized_source_port;
 
+                
                 function puts(error, stdout, stderr)
                 {
                     var data = {

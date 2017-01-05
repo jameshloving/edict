@@ -53,7 +53,7 @@ void pprint_packet(std::string mac_address,
                   uint16_t source_port,
                   uint16_t dest_port)
 {
-    std::cout << mac_address << "\n"
+    std::cout << "\"" << mac_address << "\"\n"
               << "Source: "
               << std::setw(8) << std::left << source_port
               << std::setw(80) << std::left << source_address
@@ -119,25 +119,29 @@ static int print_pkt(struct nflog_data *ldata)
 
         pprint_packet(mac_address, source_address, dest_address, source_port, dest_port);
 
-        connections.add_ipv4(mac_address, ntohs(tcphdr->th_sport));
+        connections.add_ipv4(mac_address, source_port);
     }
 
     // process IPv6 packets
     else if (packet_header_v4->version == 6)
     {
+        std::string source_address, dest_address;
+        uint16_t source_port, dest_port;
+
         struct ip6_hdr *packet_header_v6 = (struct ip6_hdr*) payload;
 
         char str[INET6_ADDRSTRLEN];
         struct in6_addr *addr = &packet_header_v6->ip6_src;
         inet_ntop(AF_INET6, addr, str, INET6_ADDRSTRLEN);
-
-        std::cout << str << " > ";
+        source_address = str;
 
         addr = (struct in6_addr*)&(packet_header_v6->ip6_dst);
         inet_ntop(AF_INET6, addr, str, INET6_ADDRSTRLEN);
-        std::cout << str << " ";
+        dest_address = str;
 
-        // TODO: add_ipv6(mac_address, source_address)
+        pprint_packet(mac_address, source_address, dest_address, 0, 0);
+
+        connections.add_ipv6(mac_address, source_address);
     }
 
     std::cout << "\n";
