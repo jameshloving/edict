@@ -10,7 +10,7 @@
 #include <stdint.h>       // int vars of atypical size (16b, 32b)
 #include <time.h>         // time(), etc.
 
-#include "tcp_client.cpp"
+#include "tcp_client.hpp"
 
 const unsigned int FILTER_LENGTH = 3600;         // sublog length in seconds
 const unsigned int FUZZINESS = 10;               // number of seconds of fuzziness in checking filter
