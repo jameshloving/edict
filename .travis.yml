@@ -3,15 +3,13 @@ sudo: required
 compiler:
 - gcc
 before_install:
-- pwd
 - sudo apt-get install libgtest-dev
 - cd /usr/src/gtest
 - sudo cmake CMakeLists.txt
 - sudo make
 - sudo cp *.a /usr/lib
-- pwd
-- cd ~/jameshloving/edict/test
 script:
+- cd /home/travis/build/jameshloving/edict/test
 - cmake CMakeLists.txt
 - make
 - ./runTests
