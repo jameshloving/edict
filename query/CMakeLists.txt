@@ -12,6 +12,15 @@ else()
         message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
 endif()
 
+# cross compile for LEDE
+SET(CMAKE_SYSTEM_NAME Linux)
+SET(CMAKE_C_COMPILER /home/ubuntu/lede-sdk-brcm47xx-mips74k_gcc-5.4.0_musl-1.1.15.Linux-x86_64/staging_dir/toolchain-mipsel_74kc_gcc-5.4.0_musl-1.1.15/bin/mipsel-openwrt-linux-gcc)
+SET(CMAKE_CXX_COMPILER /home/ubuntu/lede-sdk-brcm47xx-mips74k_gcc-5.4.0_musl-1.1.15.Linux-x86_64/staging_dir/toolchain-mipsel_74kc_gcc-5.4.0_musl-1.1.15/bin/mipsel-openwrt-linux-g++)
+SET(CMAKE_FIND_ROOT_PATH /home/ubuntu/lede-sdk-brcm47xx-mips74k_gcc-5.4.0_musl-1.1.15.Linux-x86_64/staging_dir) 
+
+SET(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+SET(BUILD_SHARED_LIBRARIES OFF)
+SET(CMAKE_EXE_LINKER_FLAGS "-lstdc++ -static")
+
 # add the executable
 add_executable(query query.cpp)
-#target_link_libraries(netfilter_log)
