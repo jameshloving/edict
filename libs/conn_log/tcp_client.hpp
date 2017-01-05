@@ -18,6 +18,9 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
+/*
+    Socket-based network communication over IPv4/TCP.
+*/
 class tcp_client
 {
     private:
@@ -38,7 +41,7 @@ class tcp_client
             \param address IPv4 address of server.
             \param port TCP port on server.
 
-            \return True to indicate successful connection.
+            \return True to indicate connection success. Throws error on fail.
         */
         bool conn(std::string, int);
 
@@ -47,7 +50,7 @@ class tcp_client
 
             \param data Data to send.
 
-            \return True to indicate successful transmission.
+            \return True to indicate transmission success. Throws error on fail.
         */
         bool send_data(std::string data);
 
