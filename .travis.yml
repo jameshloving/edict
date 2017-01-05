@@ -2,6 +2,7 @@ language: cpp
 compiler:
 - gcc
 before_install:
-- cd test
+- cd edict/test
 script: cmake CMakeLists.txt; make
-
+notifications:
+    email: false
