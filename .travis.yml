@@ -2,8 +2,7 @@ language: cpp
 compiler:
 - gcc
 before_install:
-- ls
-- ls ~/edict/test
+- cd test
 script:
 - cmake CMakeLists.txt
 - make
