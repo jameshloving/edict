@@ -26,3 +26,8 @@
 *.exe
 *.out
 *.app
+events/edict
+query/query
+
+# Swap Files
+*.swp
