@@ -1,0 +1,7 @@
+language: cpp
+compiler:
+- gcc
+before_install:
+- cd test
+script: cmake CMakeLists.txt; make
+
