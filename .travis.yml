@@ -1,8 +1,14 @@
 language: cpp
+sudo: required
 compiler:
 - gcc
 before_install:
-- cd test
+- sudo apt-get install libgtest-dev
+- cd /usr/src/gtest
+- sudo cmake CMakeLists.txt
+- sudo make
+- sudo cp *.a /usr/lib
+- cd ~/edict/test
 script:
 - cmake CMakeLists.txt
 - make
