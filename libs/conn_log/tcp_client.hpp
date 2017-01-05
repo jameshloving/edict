@@ -18,24 +18,24 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
-/*
+/**
     Socket-based network communication over IPv4/TCP.
 */
 class tcp_client
 {
     private:
-        int sock;                   /*!< network socket */
-        std::string address;        /*!< IPv4 destination address */
-        int port;                   /*!< TCP destination port */
-        struct sockaddr_in server;  /*!< connected server */
+        int sock;                   /**< network socket */
+        std::string address;        /**< IPv4 destination address */
+        int port;                   /**< TCP destination port */
+        struct sockaddr_in server;  /**< connected server */
          
     public:
-        /*!
+        /**
             Initialize the TCP client.
         */
         tcp_client();
 
-        /*!
+        /**
             Connect to a server over IPv4/TCP.
 
             \param address IPv4 address of server.
@@ -45,7 +45,7 @@ class tcp_client
         */
         bool conn(std::string, int);
 
-        /*!
+        /**
             Send string-encoded data to the server.
 
             \param data Data to send.
@@ -54,7 +54,7 @@ class tcp_client
         */
         bool send_data(std::string data);
 
-        /*!
+        /**
             Receive string-encoded data from the server.
 
             \param size Number of characters to receive.
