@@ -10,6 +10,9 @@
 //
 //=============================================================================
 
+#ifndef TCP_CLIENT_HPP
+#define TCP_CLIENT_HPP
+
 #include <iostream>
 #include <stdio.h>
 #include <string.h>
@@ -63,3 +66,5 @@ class tcp_client
         */
         std::string receive(int);
 };
+
+#endif
