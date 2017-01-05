@@ -2,7 +2,8 @@ language: cpp
 compiler:
 - gcc
 before_install:
-- cd edict/test
+- ls
+- ls ~/edict/test
 script: cmake CMakeLists.txt; make
 notifications:
     email: false
