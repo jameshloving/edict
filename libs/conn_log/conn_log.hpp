@@ -9,7 +9,7 @@
 
 #include <exception>      // exception handling
 #include <iostream>       // output
-#include <regex>          // for MAC and IP address validation
+#include <regex>          // MAC and IP address validation
 #include <string>         // string class
 #include <stdint.h>       // int vars of atypical size (16b, 32b)
 #include <time.h>         // time(), etc.
@@ -55,7 +55,7 @@ class conn_log
             Test a string-encoded MAC address for validity. A valid MAC
             has 12 hex characters, no colons/spaces/hyphens.
 
-            \param mac 48-bit MAC address (ex "aabbccddeeff").
+            \param mac 48-bit/12-char MAC address (ex "aabbccddeeff").
 
             \return Boolean indicator of MAC validity.
         */
@@ -122,4 +122,3 @@ class conn_log
                       std::string ipv6_address,
                       time_t timestamp);
 };
-
