@@ -22,15 +22,15 @@ class conn_log
     private:
         tcp_client c;
 
-        // TODO: fix these functions
-        bool valid_mac(std::string mac) const;
-        bool valid_ipv6(std::string ipv6) const;
-
         unsigned int get_filter_size();
         void prune_filters();
 
     public:
         conn_log();
+
+        // TODO: fix these functions
+        bool valid_mac(std::string mac) const;
+        bool valid_ipv6(std::string ipv6) const;
 
         void add_ipv4(std::string mac_address,
                       uint16_t port);
@@ -303,4 +303,3 @@ bool conn_log::has_ipv6(std::string mac_address,
 
     return false;
 }
-
