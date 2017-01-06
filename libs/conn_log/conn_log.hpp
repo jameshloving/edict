@@ -16,6 +16,9 @@
 
 #include "tcp_client.hpp"
 
+/**
+    Log IPv4 and IPv6 communications on a local Bloomd server.
+*/
 class conn_log
 {
     private:
