@@ -7,6 +7,9 @@
 //
 //=============================================================================
 
+#ifndef CONN_LOG_HPP
+#define CONN_LOG_HPP
+
 #include <exception>      // exception handling
 #include <iostream>       // output
 #include <regex>          // MAC and IP address validation
@@ -122,3 +125,5 @@ class conn_log
                       std::string ipv6_address,
                       time_t timestamp);
 };
+
+#endif
