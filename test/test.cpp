@@ -73,6 +73,9 @@ TEST(conn_log, valid_ipv6)
     s = "::1::2";
     ASSERT_FALSE(c.valid_ipv6(s));
 
+    s = "127.0.0.1";
+    ASSERT_FALSE(c.valid_ipv6(s));
+
     system("pkill bloomd > /dev/null");
 }
 
