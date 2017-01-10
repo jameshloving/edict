@@ -27,12 +27,36 @@ conn_log::conn_log()
 
 bool conn_log::valid_mac(std::string mac) const
 {
+    if (mac.length() != 12)
+    {
+        return false;
+    }
+
+    for (short i = 0; i < mac.length(); ++i)
+    {
+        if (mac[i] < 48 ||
+            mac[i] > 102 ||
+            (mac[i] > 57 && mac[i] < 97))
+        {
+            return false;
+        }
+    }
+
     return true;
 }
 
 bool conn_log::valid_ipv6(std::string ipv6) const
 {
-    return true;
+    struct sockaddr_in6 sa;
+
+    if (inet_pton(AF_INET6, ipv6.c_str(), &(sa.sin6_addr)))
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 unsigned int conn_log::get_filter_size()
