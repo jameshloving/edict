@@ -1,42 +1,13 @@
-/*
-  device_log.cpp
-  James H. Loving
-*/
+//=============================================================================
+//
+// Name:        device_log.cpp
+// Authors:     James H. Loving
+// Description: This file defines the device_log class, used to log devices
+//              that have connected to EDICT's router.
+//
+//=============================================================================
 
-#include <ctime>
-#include <exception>      // exception handling
-#include <iostream>       // output
-#include <fstream>        // file IO
-#include <sstream>
-#include <string>         // string class
-#include <time.h>         // time(), etc.
-#include <map>
-#include <unordered_set>
-
-const char DEVICE_LOG_FILE[] = "../stor/device_log.txt";
-
-struct device_log_entry
-{
-    std::string make_model;
-    time_t first_seen;
-};
-
-class device_log
-{
-    protected:
-        std::unordered_set<std::string> macs;
-
-    public:
-        device_log();
-
-        void add_device(std::string mac_address,
-                        std::string make_model);
-
-        unsigned int count(std::string mac_address);
-
-        std::unordered_set<std::string> get_macs();
-        std::map<std::string, struct device_log_entry> get_devices();
-};
+#include "device_log.hpp"
 
 device_log::device_log()
 {
