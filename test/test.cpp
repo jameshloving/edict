@@ -79,6 +79,22 @@ TEST(conn_log, valid_ipv6)
     system("pkill bloomd > /dev/null");
 }
 
+TEST(device_log, should_log)
+{
+    system("mv /home/ubuntu/edict/stor/dnt.txt /home/ubuntu/edict/stor/dnt.txt.backup");
+    system("echo aabbccddeeff > /home/ubuntu/edict/stor/dnt.txt");
+
+    device_log d;
+
+    std::string s = "bbccddeeffgg";
+    ASSERT_TRUE(d.should_log(s));
+
+    s = "aabbccddeeff";
+    ASSERT_FALSE(d.should_log(s));    
+
+    system("mv /home/ubuntu/edict/stor/dnt.txt.backup /home/ubuntu/edict/stor/dnt.txt");
+}
+
 int main(int argc, char **argv)
 {
     testing::InitGoogleTest(&argc, argv);

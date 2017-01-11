@@ -11,6 +11,7 @@
 
 device_log::device_log()
 {
+    dnt = get_dnt();
     macs = get_macs();
 }
 
@@ -41,6 +42,18 @@ unsigned int device_log::count(std::string mac_address)
     return macs.count(mac_address);
 }
 
+bool device_log::should_log(std::string mac_address)
+{
+    if (dnt.count(mac_address))
+    {
+        return false;
+    }
+    else
+    {
+        return true;
+    }
+}
+
 std::unordered_set<std::string> device_log::get_macs()
 {
     std::unordered_set<std::string> mac_addresses;
@@ -62,6 +75,27 @@ std::unordered_set<std::string> device_log::get_macs()
     }    
 
     return mac_addresses;
+}
+
+std::unordered_set<std::string> device_log::get_dnt()
+{
+    std::unordered_set<std::string> dnt;
+
+    std::ifstream infile;
+    infile.open(DNT_FILE, std::ios::in);
+
+    std::string line;
+    while(std::getline(infile,line))
+    {
+        std::stringstream lineStream(line);
+        std::string mac_address;
+
+        std::getline(lineStream, mac_address, '\n');
+
+        dnt.insert(mac_address);
+    }
+
+    return dnt;
 }
 
 std::map<std::string, struct device_log_entry> device_log::get_devices()

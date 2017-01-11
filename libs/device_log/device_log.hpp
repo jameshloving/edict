@@ -20,6 +20,13 @@
 #include <map>
 #include <unordered_set>
 
+const char DEVICE_LOG_FILE[] = "../stor/device_log.txt";
+                                        /**< file location to store
+                                             device log entries */
+const char DNT_FILE[] = "../stor/dnt.txt";
+                                        /**< file location to store
+                                             DO-NOT-TRACK entries */
+
 /**
     Each entry in the device log stores the device's make&model and
     the timestamp the device was first seen.
@@ -37,10 +44,8 @@ struct device_log_entry
 class device_log
 {
     protected:
-        const char DEVICE_LOG_FILE[] = "../stor/device_log.txt";
-                                                /**< file location to store
-                                                     device log entries */
         std::unordered_set<std::string> macs;   /**< cache of stored MACs */
+        std::unordered_set<std::string> dnt;    /**< cache of DO-NOT-TRACK list */
 
     public:
         /**
@@ -68,12 +73,28 @@ class device_log
         unsigned int count(std::string mac_address);
 
         /**
+            Determine if a MAC address is on the user's DO-NOT-TRACK list.
+
+            \param mac_address Valid 12-char MAC address of device to check.
+
+            \return Boolean to identify whether the device should be logged.
+        */
+        bool should_log(std::string mac_address);
+
+        /**
             Recreate the MAC cache from file.
 
             \return MAC cache, as an unordered set of String-encoded MACs.
         */
         std::unordered_set<std::string> get_macs();
         
+        /**
+            Recreate the DO-NOT-TRACK list from file.
+
+            \return DNT cache, as an unordered set of String-encoded MACs.
+        */
+        std::unordered_set<std::string> get_dnt();
+
         /**
             Recreate the device log from file.
 
