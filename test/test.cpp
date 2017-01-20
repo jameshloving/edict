@@ -17,7 +17,7 @@
 #include <unistd.h>
 
 #include "gtest/gtest.h"
-#include "../edict.cpp"
+#include "../edict.hpp"
 
 TEST(conn_log, valid_mac)
 {

@@ -17,5 +17,5 @@ find_package(GTest REQUIRED)
 include_directories(${GTEST_INCLUDE_DIRS})
  
 # Link runTests with what we want to test and the GTest and pthread library
-add_executable(runTests ../libs/conn_log/tcp_client.cpp ../libs/conn_log/conn_log.cpp ../libs/device_log/device_log.cpp test.cpp)
-target_link_libraries(runTests ${GTEST_LIBRARIES} pthread)
+add_executable(runTests ../edict.cpp ../libs/conn_log/tcp_client.cpp ../libs/conn_log/conn_log.cpp ../libs/device_log/device_log.cpp test.cpp)
+target_link_libraries(runTests ${GTEST_LIBRARIES} pthread netfilter_log rt)
