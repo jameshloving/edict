@@ -20,10 +20,10 @@
 #include <map>
 #include <unordered_set>
 
-const char DEVICE_LOG_FILE[] = "../stor/device_log.txt";
+const char DEVICE_LOG_FILE[] = "/var/lib/edict/device_log.txt";
                                         /**< file location to store
                                              device log entries */
-const char DNT_FILE[] = "../stor/dnt.txt";
+const char DNT_FILE[] = "/var/lib/edict/do_not_track.txt";
                                         /**< file location to store
                                              DO-NOT-TRACK entries */
 
@@ -96,7 +96,7 @@ class device_log
         std::unordered_set<std::string> get_dnt();
 
         /**
-            Recreate the device log from file.
+            Recreate the device log cache from file, especially for easy queries.
 
             \return Device log, as a map of MACs to device_log entries.
         */

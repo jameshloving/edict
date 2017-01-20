@@ -17,5 +17,5 @@ endif()
 set(CMAKE_BUILD_TYPE Debug)
 
 # add the executable
-add_executable(edict edict.cpp)
+add_executable(edict edict_main.cpp edict.cpp libs/conn_log/tcp_client.cpp libs/conn_log/conn_log.cpp libs/device_log/device_log.cpp)
 target_link_libraries(edict netfilter_log rt)

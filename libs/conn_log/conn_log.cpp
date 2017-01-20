@@ -143,7 +143,9 @@ void conn_log::add_ipv4(std::string mac_address,
     reply = c.receive(1024);
 
     std::cout << "conn_log.add_ipv4(" << timestamp << "," 
-              << mac_address << "," << port << ")\n";
+              << mac_address << "," << port << ") - "
+              << std::to_string(timestamp / FILTER_LENGTH) + ":"
+              << mac_address + "|" + std::to_string(port) + "\n";
 }
 
 bool conn_log::has_ipv4(std::string mac_address,

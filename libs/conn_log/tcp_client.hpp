@@ -13,11 +13,13 @@
 #ifndef TCP_CLIENT_HPP
 #define TCP_CLIENT_HPP
 
+#include <exception>
 #include <iostream>
 #include <stdio.h>
 #include <string.h>
 #include <string>
 #include <sys/socket.h>
+#include <stdexcept>
 #include <arpa/inet.h>
 #include <netdb.h>
 

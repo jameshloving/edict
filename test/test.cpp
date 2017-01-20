@@ -17,8 +17,7 @@
 #include <unistd.h>
 
 #include "gtest/gtest.h"
-#include "../libs/conn_log/conn_log.hpp"
-#include "../libs/device_log/device_log.hpp"
+#include "../edict.cpp"
 
 TEST(conn_log, valid_mac)
 {
@@ -95,9 +94,37 @@ TEST(device_log, should_log)
     system("mv /home/ubuntu/edict/stor/dnt.txt.backup /home/ubuntu/edict/stor/dnt.txt");
 }
 
+TEST(edict, parse_args)
+{
+    int arg_count = 2;
+    char *arg_vector[10];
+    arg_vector[0] = (char *)"edict";
+    arg_vector[1] = (char *)"start";
+    struct args_struct args = parse_args(arg_count, arg_vector);
+    ASSERT_EQ("start", args.command);
+
+    arg_count = 1;
+    args = parse_args(arg_count, arg_vector);
+    ASSERT_EQ("help", args.command);
+
+    arg_vector[1] = (char *)"query";
+    arg_vector[2] = (char *)"timestamp";
+    arg_vector[3] = (char *)"v4";
+    arg_vector[4] = (char *)"80";
+    arg_count = 5;
+    args = parse_args(arg_count, arg_vector);
+    ASSERT_EQ("query", args.command);
+    ASSERT_EQ("timestamp", args.query_timestamp);
+
+    arg_vector[5] = (char *)"samsung";
+    arg_count = 6;
+    args = parse_args(arg_count, arg_vector);
+    ASSERT_EQ("help", args.command);
+}
+
 int main(int argc, char **argv)
 {
-    testing::InitGoogleTest(&argc, argv);
+    ::testing::InitGoogleTest(&argc, argv);
 
     return RUN_ALL_TESTS();
 }

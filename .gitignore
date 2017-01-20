@@ -31,3 +31,7 @@ query/query
 
 # Swap Files
 *.swp
+
+# CMake Files
+*CmakeCache.txt
+*CmakeFiles*
