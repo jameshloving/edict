@@ -12,6 +12,10 @@
 //
 //=============================================================================
 
+// to allow Travis to test
+#define _BSD_SOURCE
+#define __FAVOR_BSD
+
 #include <cstdlib>
 #include <string>
 #include <unistd.h>
@@ -80,8 +84,8 @@ TEST(conn_log, valid_ipv6)
 
 TEST(device_log, should_log)
 {
-    system("mv /home/ubuntu/edict/stor/dnt.txt /home/ubuntu/edict/stor/dnt.txt.backup");
-    system("echo aabbccddeeff > /home/ubuntu/edict/stor/dnt.txt");
+    system("sudo mv /var/lib/edict/do_not_track.txt /var/lib/edict/do_not_track.txt.backup");
+    system("sudo echo aabbccddeeff > /var/lib/edict/do_not_track.txt");
 
     device_log d;
 
@@ -91,35 +95,41 @@ TEST(device_log, should_log)
     s = "aabbccddeeff";
     ASSERT_FALSE(d.should_log(s));    
 
-    system("mv /home/ubuntu/edict/stor/dnt.txt.backup /home/ubuntu/edict/stor/dnt.txt");
+    system("mv /var/lib/edict/do_not_track.txt.backup /var/lib/edict/do_not_track.txt");
 }
 
 TEST(edict, parse_args)
 {
     int arg_count = 2;
     char *arg_vector[10];
+
+    // test "start" parsing
     arg_vector[0] = (char *)"edict";
     arg_vector[1] = (char *)"start";
     struct args_struct args = parse_args(arg_count, arg_vector);
     ASSERT_EQ("start", args.command);
 
+    // test "help" parsing
     arg_count = 1;
     args = parse_args(arg_count, arg_vector);
     ASSERT_EQ("help", args.command);
 
+    // test "query" parsing
     arg_vector[1] = (char *)"query";
     arg_vector[2] = (char *)"timestamp";
     arg_vector[3] = (char *)"v4";
     arg_vector[4] = (char *)"80";
-    arg_count = 5;
+    arg_vector[5] = (char *)"plain";
+    arg_count = 6;
     args = parse_args(arg_count, arg_vector);
     ASSERT_EQ("query", args.command);
     ASSERT_EQ("timestamp", args.query_timestamp);
 
-    arg_vector[5] = (char *)"samsung";
-    arg_count = 6;
+    // test that extra arguments triggers help
+    arg_vector[6] = (char *)"samsung";
+    arg_count = 7;
     args = parse_args(arg_count, arg_vector);
-    ASSERT_EQ("help", args.command);
+    ASSERT_EQ("invalid", args.command);
 }
 
 int main(int argc, char **argv)
