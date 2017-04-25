@@ -43,6 +43,10 @@ struct device_log_entry
 */
 class device_log
 {
+    private:
+        const unsigned int MAX_LOG_SIZE = 1000; /**< max number of devices to log */
+	unsigned int current_log_size;		/**< current number of devices in log */
+
     protected:
         std::unordered_set<std::string> macs;   /**< cache of stored MACs */
         std::unordered_set<std::string> dnt;    /**< cache of DO-NOT-TRACK list */
